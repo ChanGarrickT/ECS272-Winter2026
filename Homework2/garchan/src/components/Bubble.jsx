@@ -43,7 +43,7 @@ export default function Bubble(){
                     </Stack>
                 </Paper>
                 <Paper sx={{flex: 1}}>
-                    <Box id='bubble-content' sx={{flex: 1}}>
+                    <Box id='bubble-content' ref={bubbleContainerRef} sx={{height: '100%', flex: 1}}>
                         <svg id='bubble-svg' ref={bubbleRef} style={{ width: '100%', height: '100%' }}></svg>
                     </Box>
                 </Paper>
@@ -54,9 +54,10 @@ export default function Bubble(){
 
 function drawChart(svgElement, bubbleInfo, size){
     const minDim = Math.min(size.width, size.height);
+    console.log(minDim);
 
     const svg = d3.select(svgElement)
-        .attr('viewBox', `-${minDim / 2} -${minDim / 2} ${minDim} ${minDim}`)
+        .attr('viewBox', `0 0 ${size.width} ${size.height}`)
         .style('width', '100%')
         .style('height', '100%')
         .style('display', 'block');
@@ -79,7 +80,7 @@ function drawChart(svgElement, bubbleInfo, size){
 
     // Draw circles
     const node = svg.append('g')
-        .attr("transform", `translate(${(size.width) / 2}, ${size.height / 2})`)
+        .attr('transform', `translate(${(size.width) / 2}, ${size.height / 2})`)
         .selectAll('circle')
         .data(root.descendants().slice(1)) // slice(1) to not draw root
         .join('circle')
@@ -88,7 +89,7 @@ function drawChart(svgElement, bubbleInfo, size){
     // Draw labels
     const label = svg.append('g')
         .style('font-size', '0.6rem')
-        .attr("transform", `translate(${(size.width) / 2}, ${size.height / 2})`)
+        .attr('transform', `translate(${(size.width) / 2}, ${size.height / 2})`)
         .attr('pointer-events', 'none')
         .attr('text-anchor', 'middle')
         .selectAll('text')
