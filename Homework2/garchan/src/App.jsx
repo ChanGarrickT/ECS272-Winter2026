@@ -23,22 +23,26 @@ const theme = createTheme({
 
 function Layout() {
   return (
-    <Box id='main-container' sx={{ maxWidth: '80%', mx: 'auto'}}>
-      <Stack spacing={3} sx={{ height: '100%' }}>
+    <Box id='main-container' sx={{ maxWidth: '95%', mx: 'auto', minHeight: 0}}>
+      <Stack spacing={3} sx={{ height: '95%', minHeight: 0 }}>
         <Box id='title' sx={{ height: '7%' }}>
           <h1>Paris Olympics 2024</h1>
         </Box>
-        <Grid container spacing={3} sx={{ height: '55%'}}>
-          <Grid size={6}>
+        <Grid container spacing={3} sx={{ height: '100%', minHeight: 0}}>
+          <Grid size={6} sx={{ minHeight: 0}}>
             <Bubble />
           </Grid>
-          <Grid size={6}>
-            <Chord />
+          <Grid size={6} sx={{ minHeight: 0}}>
+            <Stack gap={3} sx={{ height: 'calc(100% - 20px)', minHeight: 0, maxHeight: '100%' }}>
+              <Box sx={{height: '70%', minHeight: 0}}>
+                <Chord /> 
+              </Box>
+              <Box sx={{flex: 1, minHeight: 0}}>
+                <Timeline />
+              </Box>               
+            </Stack>            
           </Grid>
         </Grid>
-        <Box id='timeline' sx={{ height: '25%' }}>
-          <Timeline />
-        </Box>
       </Stack>
     </Box>
   )

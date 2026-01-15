@@ -34,7 +34,7 @@ export default function Bubble(){
     }, [athleteInfo, size]);
 
     return (
-        <Paper elevation={3} sx={{height: '100%', boxSizing: 'border-box', padding: '10px'}}>
+        <Paper elevation={3} sx={{height: '100%', boxSizing: 'border-box', padding: '10px', minHeight: 0}}>
             <Stack id='bubble-panel' spacing={1} sx={{height: '100%'}}>
                 <Paper sx={{marginTop: '10px'}}>
                     <Stack id='bubble-widgets' direction={'row'} sx={{ margin: '5px'}}>
@@ -42,9 +42,9 @@ export default function Bubble(){
                         <Button>Widget 2</Button>
                     </Stack>
                 </Paper>
-                <Paper sx={{flex: 1}}>
-                    <Box id='bubble-content' ref={bubbleContainerRef} sx={{height: '100%', flex: 1}}>
-                        <svg id='bubble-svg' ref={bubbleRef} style={{ width: '100%', height: '100%' }}></svg>
+                <Paper sx={{flex: 1, minHeight: 0}}>
+                    <Box id='bubble-content' ref={bubbleContainerRef} sx={{height: '100%', flex: 1, minHeight: 0}}>
+                        <svg id='bubble-svg' ref={bubbleRef} style={{ width: '100%', height: '100%', minHeight: 0 }}></svg>
                     </Box>
                 </Paper>
             </Stack>
@@ -66,7 +66,7 @@ function drawChart(svgElement, bubbleInfo, size){
     // Color scale
     const colorScale = d3.scaleLinear()
         .domain([0, 3])
-        .range(['white', '#aaa'])
+        .range(['white', '#ccc'])
         .interpolate(d3.interpolateHcl);
     
     // Pack
@@ -88,7 +88,7 @@ function drawChart(svgElement, bubbleInfo, size){
 
     // Draw labels
     const label = svg.append('g')
-        .style('font-size', '0.6rem')
+        .style('font-size', '0.8rem')
         .attr('transform', `translate(${(size.width) / 2}, ${size.height / 2})`)
         .attr('pointer-events', 'none')
         .attr('text-anchor', 'middle')

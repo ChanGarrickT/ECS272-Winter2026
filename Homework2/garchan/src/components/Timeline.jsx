@@ -91,7 +91,7 @@ function drawChart(svgElement, medalTally, countries, size){
     // Draw axes
     const xAxis = svg.append('g')
         .attr('transform', `translate(0, ${size.height - margin.bottom})`)
-        .call(d3.axisBottom(xScale).ticks(16));
+        .call(d3.axisBottom(xScale).ticks(9));
     const yAxis = svg.append('g')
         .attr('transform', `translate(${margin.left}, 0)`)
         .call(d3.axisLeft(yScale).ticks(8));
