@@ -1,0 +1,40 @@
+const countries = [
+    "AFG", "AIN", "ALB", "ALG", "AND", "ANG", "ANT", "ARG", "ARM", "ARU",
+    "ASA", "AUS", "AUT", "AZE", "BAH", "BAN", "BAR", "BDI", "BEL", "BEN",
+    "BER", "BHU", "BIH", "BIZ", "BOL", "BOT", "BRA", "BRN", "BRU", "BUL",
+    "BUR", "CAF", "CAM", "CAN", "CAY", "CGO", "CHA", "CHI", "CHN", "CIV",
+    "CMR", "COD", "COK", "COL", "COM", "CPV", "CRC", "CRO", "CUB", "CYP",
+    "CZE", "DEN", "DJI", "DMA", "DOM", "ECU", "EGY", "EOR", "ERI", "ESA",
+    "ESP", "EST", "ETH", "FIJ", "FIN", "FRA", "FSM", "GAB", "GAM", "GBR",
+    "GBS", "GEO", "GEQ", "GER", "GHA", "GRE", "GRN", "GUA", "GUI", "GUM",
+    "GUY", "HAI", "HKG", "HON", "HUN", "INA", "IND", "IRI", "IRL", "IRQ",
+    "ISL", "ISR", "ISV", "ITA", "IVB", "JAM", "JOR", "JPN", "KAZ", "KEN",
+    "KGZ", "KIR", "KOR", "KOS", "KSA", "KUW", "LAO", "LAT", "LBA", "LBN",
+    "LBR", "LCA", "LES", "LIE", "LTU", "LUX", "MAD", "MAR", "MAS", "MAW",
+    "MDA", "MDV", "MEX", "MGL", "MHL", "MKD", "MLI", "MLT", "MNE", "MON",
+    "MOZ", "MRI", "MTN", "MYA", "NAM", "NCA", "NED", "NEP", "NGR", "NIG",
+    "NOR", "NRU", "NZL", "OMA", "PAK", "PAN", "PAR", "PER", "PHI", "PLE",
+    "PLW", "PNG", "POL", "POR", "PRK", "PUR", "QAT", "ROU", "RSA", "RWA",
+    "SAM", "SEN", "SEY", "SGP", "SKN", "SLE", "SLO", "SMR", "SOL", "SOM",
+    "SRB", "SRI", "SSD", "STP", "SUD", "SUI", "SUR", "SVK", "SWE", "SWZ",
+    "SYR", "TAN", "TGA", "THA", "TJK", "TKM", "TLS", "TOG", "TPE", "TTO",
+    "TUN", "TUR", "TUV", "UAE", "UGA", "UKR", "URU", "USA", "UZB", "VAN",
+    "VEN", "VIE", "VIN", "YEM", "ZAM", "ZIM"
+]
+
+function emptyMedalCount(){
+    return {
+        bronze: 0,
+        silver: 0,
+        gold: 0
+    };
+}
+
+export default function getEmptyRow(){
+    let result = {};
+
+    countries.forEach(d => {
+        result[d] = emptyMedalCount();
+    })
+    return result;
+}
