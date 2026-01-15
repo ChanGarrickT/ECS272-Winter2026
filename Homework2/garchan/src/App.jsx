@@ -28,7 +28,7 @@ function Layout() {
         <Box id='title' sx={{ height: '7%' }}>
           <h1>Paris Olympics 2024</h1>
         </Box>
-        <Grid container spacing={3} sx={{ height: '55%' }}>
+        <Grid container spacing={3} sx={{ height: '55%'}}>
           <Grid size={6}>
             <Bubble />
           </Grid>

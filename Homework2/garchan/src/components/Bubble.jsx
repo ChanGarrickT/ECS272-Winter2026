@@ -11,18 +11,19 @@ const margin = { top: 10, right: 170, bottom: 40, left: 50 };
 export default function Bubble(){
     const [athleteInfo, setAthleteInfo] = useState({});
     const bubbleRef = useRef(null);
+    const bubbleContainerRef = useRef(null);
 
     const [size, setSize] = useState({ width: 0, height: 0 });
 
     const onResize = useDebounceCallback((size) => setSize(size), 200);
 
-    useResizeObserver({ ref: bubbleRef, onResize });
+    useResizeObserver({ ref: bubbleContainerRef, onResize });
 
     useEffect(() => {
         // Read JSON once HTML element is loaded
         if (isEmpty(eventToCountryJson)) return;
         setAthleteInfo(eventToCountryJson);
-        }, []);
+    }, []);
 
     useEffect(() => {
         if (isEmpty(athleteInfo)) return;
@@ -53,7 +54,6 @@ export default function Bubble(){
 
 function drawChart(svgElement, bubbleInfo, size){
     const minDim = Math.min(size.width, size.height);
-    console.log(minDim);
 
     const svg = d3.select(svgElement)
         .attr('viewBox', `-${minDim / 2} -${minDim / 2} ${minDim} ${minDim}`)
@@ -65,7 +65,7 @@ function drawChart(svgElement, bubbleInfo, size){
     // Color scale
     const colorScale = d3.scaleLinear()
         .domain([0, 3])
-        .range(['white', '#555'])
+        .range(['white', '#aaa'])
         .interpolate(d3.interpolateHcl);
     
     // Pack
@@ -77,17 +77,18 @@ function drawChart(svgElement, bubbleInfo, size){
         .sort((a, b) => b.value - a.value));
     const root = pack(bubbleInfo);
 
-    // Create container
-
     // Draw circles
     const node = svg.append('g')
+        .attr("transform", `translate(${(size.width) / 2}, ${size.height / 2})`)
         .selectAll('circle')
         .data(root.descendants().slice(1)) // slice(1) to not draw root
+        .join('circle')
         .attr('fill', d => colorScale(d.depth))
 
     // Draw labels
     const label = svg.append('g')
-        .style('font-size', '1rem')
+        .style('font-size', '0.6rem')
+        .attr("transform", `translate(${(size.width) / 2}, ${size.height / 2})`)
         .attr('pointer-events', 'none')
         .attr('text-anchor', 'middle')
         .selectAll('text')
