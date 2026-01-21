@@ -4,48 +4,20 @@ import { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { isEmpty } from 'lodash';
 import { useResizeObserver, useDebounceCallback } from 'usehooks-ts';
-import getEmptyRow from './countryMedalCount';
 import countryCodes from '../../data/countryCodes.json';
 
 const margin = { top: 10, right: 170, bottom: 40, left: 50 };
 
 export default function Timeline(props){
-    const [medalTally, setMedalTally] = useState([]);
     const medalTallyRef = useRef(null);
 
     const [size, setSize] = useState({ width: 0, height: 0 });
-
-    const [selectedCountries, setSelectedCountries] = useState([]);
-    const top5 = [
-        {country: 'USA', color: 'dodgerblue'},
-        {country: 'CHN', color: 'crimson'},
-        {country: 'JPN', color: 'lightseagreen'},
-        {country: 'AUS', color: 'orange'},
-        {country: 'FRA', color: 'mediumorchid'}
-    ];
 
     const [colorPalette, setColorPalette] = useState([]);
     
     const onResize = useDebounceCallback((size) => setSize(size), 200);
 
     useResizeObserver({ ref: medalTallyRef, onResize });
-    
-    useEffect(() => {
-    // Read CSV once HTML element is loaded
-    const dataFromCSV = async () => {
-        try {
-            const csvData = await d3.csv('../../data/medals.csv', d => {
-                // This callback allows you to rename the keys, format values, and drop columns you don't need
-                return {date: d.medal_date, medal: parseInt(d.medal_code), countryCode: d.country_code, country: d.country, discipline: d.discipline, event: d.event};
-            });
-            props.setMedalTally(tally(csvData));
-            props.setSelectedCountries(top5);
-        } catch (error) {
-            console.error('Error loading CSV:', error);
-        }
-    } 
-        dataFromCSV();
-    }, []);
 
     useEffect(() => {
         if (isEmpty(props.medalTally)) return;
@@ -129,23 +101,6 @@ function drawChart(svgElement, medalTally, countries, size){
             .style('font-size', '0.7rem')
         }
     );
-}
-
-const medalCodeToType = {1: 'gold', 2: 'silver', 3: 'bronze'};
-
-function tally(data){
-    let currentDate = '2024-07-26';
-    let currentTally = getEmptyRow();
-    let results = []
-    data.forEach(d => {
-        if(currentDate !== d.date){
-            results.push(JSON.parse(JSON.stringify({date: currentDate, ...currentTally})));
-            currentDate = d.date;
-        }
-        currentTally[d.countryCode][medalCodeToType[d.medal]]++;
-    })
-    results.push(JSON.parse(JSON.stringify({date: currentDate, ...currentTally})));
-    return results;
 }
 
 function getMedalExtent(medalTally, countries){

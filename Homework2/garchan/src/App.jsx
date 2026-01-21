@@ -8,6 +8,7 @@ import * as d3 from 'd3';
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { grey } from "@mui/material/colors";
 import { useState, useEffect, useRef } from 'react';
+import getEmptyRow from './components/countryMedalCount';
 
 // Adjust the color theme for material ui
 const theme = createTheme({
@@ -21,25 +22,58 @@ const theme = createTheme({
     },
 });
 
+const defaultCountries = [
+	{country: 'USA', color: 'dodgerblue'},
+	{country: 'CHN', color: 'crimson'},
+	{country: 'JPN', color: 'lightseagreen'},
+	{country: 'AUS', color: 'orange'},
+	{country: 'FRA', color: 'mediumorchid'}
+];
+
+const defaultDates = [
+	'2024-08-11'
+]
+
 function Layout() {
+	const [medalCsv, setMedalCsv] = useState(null);
 	const [medalTally, setMedalTally] = useState([]);
-	const [selectedCountries, setSelectedCountries] = useState([]);
-	const top5 = [
-			{country: 'USA', color: 'dodgerblue'},
-			{country: 'CHN', color: 'crimson'},
-			{country: 'JPN', color: 'lightseagreen'},
-			{country: 'AUS', color: 'orange'},
-			{country: 'FRA', color: 'mediumorchid'}
-	];
-	
+	const [selectedCountries, setSelectedCountries] = useState(defaultCountries);
+	const [selectedDates, setSelectedDates] = useState(defaultDates);
+
 	const [colorPalette, setColorPalette] = useState([]);
 
-	// Variables and methods to pass to 
+	useEffect(() => {
+		// Read CSV once HTML element is loaded
+		const dataFromCSV = async () => {
+			try {
+				const csvData = await d3.csv('../../data/medals.csv', d => {
+					// This callback allows you to rename the keys, format values, and drop columns you don't need
+					return {date: d.medal_date, medal: parseInt(d.medal_code), countryCode: d.country_code, country: d.country, discipline: d.discipline, event: d.event};
+				});
+				setMedalCsv(csvData);
+				setMedalTally(tally(csvData));
+			} catch (error) {
+				console.error('Error loading CSV:', error);
+			}
+		} 
+			dataFromCSV();
+		}, []);
+
+	// Variables and methods to pass to the World component
+	const worldProps = {
+		medalCsv: medalCsv,
+		selectedCountries: selectedCountries,
+		selectedDates: selectedDates
+	}
+
+	// Variables and methods to pass to the Timeline component
 	const timelineProps = {
 		medalTally: medalTally,
 		setMedalTally: setMedalTally,
 		selectedCountries: selectedCountries,
-		setSelectedCountries: setSelectedCountries
+		setSelectedCountries: setSelectedCountries,
+		selectedDates: selectedDates,
+		setSelectedDates: setSelectedDates
 	}
 
     return (
@@ -55,7 +89,7 @@ function Layout() {
                     <Grid size={6} sx={{ minHeight: 0 }}>
                         <Stack gap={3} sx={{ height: "calc(100% - 20px)", minHeight: 0, maxHeight: "100%"}}>
                             <Box sx={{ height: "70%", minHeight: 0 }}>
-                                <World />
+                                <World {...worldProps}/>
                             </Box>
                             <Box sx={{ flex: 1, minHeight: 0 }}>
                                 <Timeline {...timelineProps}/>
@@ -75,6 +109,23 @@ function App() {
             <Layout />
         </ThemeProvider>
     );
+}
+
+const medalCodeToType = {1: 'gold', 2: 'silver', 3: 'bronze'};
+
+function tally(data){
+    let currentDate = '2024-07-26';
+    let currentTally = getEmptyRow();
+    let results = []
+    data.forEach(d => {
+        if(currentDate !== d.date){
+            results.push(JSON.parse(JSON.stringify({date: currentDate, ...currentTally})));
+            currentDate = d.date;
+        }
+        currentTally[d.countryCode][medalCodeToType[d.medal]]++;
+    })
+    results.push(JSON.parse(JSON.stringify({date: currentDate, ...currentTally})));
+    return results;
 }
 
 export default App;
