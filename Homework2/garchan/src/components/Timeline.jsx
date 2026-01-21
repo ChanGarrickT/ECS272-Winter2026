@@ -9,7 +9,7 @@ import countryCodes from '../../data/countryCodes.json';
 
 const margin = { top: 10, right: 170, bottom: 40, left: 50 };
 
-export default function Timeline(){
+export default function Timeline(props){
     const [medalTally, setMedalTally] = useState([]);
     const medalTallyRef = useRef(null);
 
@@ -36,10 +36,10 @@ export default function Timeline(){
         try {
             const csvData = await d3.csv('../../data/medals.csv', d => {
                 // This callback allows you to rename the keys, format values, and drop columns you don't need
-                return {date: d.medal_date, medal: parseInt(d.medal_code), countryCode: d.country_code, country: d.country, sport: d.discipline};
+                return {date: d.medal_date, medal: parseInt(d.medal_code), countryCode: d.country_code, country: d.country, discipline: d.discipline, event: d.event};
             });
-            setMedalTally(tally(csvData));
-            setSelectedCountries(top5);
+            props.setMedalTally(tally(csvData));
+            props.setSelectedCountries(top5);
         } catch (error) {
             console.error('Error loading CSV:', error);
         }
@@ -48,12 +48,12 @@ export default function Timeline(){
     }, []);
 
     useEffect(() => {
-        if (isEmpty(medalTally)) return;
+        if (isEmpty(props.medalTally)) return;
         if (size.width === 0 || size.height === 0) return;
         d3.select('#medalTally-svg').selectAll('*').remove();
         
-        drawChart(medalTallyRef.current, medalTally, selectedCountries, size);
-    }, [medalTally, selectedCountries, size]);
+        drawChart(medalTallyRef.current, props.medalTally, props.selectedCountries, size);
+    }, [props.medalTally, props.selectedCountries, size]);
 
     return (
         <Paper elevation={3} sx={{height: '100%', padding: '10px'}}>

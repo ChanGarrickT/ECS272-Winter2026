@@ -1,4 +1,3 @@
-import React from 'react'
 import { Paper, Divider, Button, Grid, Stack, Box } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
@@ -54,7 +53,6 @@ export default function Bubble(){
 
 function drawChart(svgElement, bubbleInfo, size){
     const minDim = Math.min(size.width, size.height);
-    console.log(minDim);
 
     const svg = d3.select(svgElement)
         .attr('viewBox', `0 0 ${size.width} ${size.height}`)
