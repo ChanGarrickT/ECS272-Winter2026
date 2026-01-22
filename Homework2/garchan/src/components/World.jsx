@@ -11,9 +11,9 @@ const COUNTRY_BOUNDARY_WIDTH = 1;
 const MAX_ZOOM = 10;
 
 export default function World(props){
-    const [filteredMedals, setFilteredMedals] = useState([])
+    const [filteredMedals, setFilteredMedals] = useState([]);           // details with no counts
+    const [filteredMedalCounts, setFilteredMedalCounts] = useState({}); // {country: count}
     const worldRef = useRef(null);
-    const gRef = useRef(null);
 
     const [size, setSize] = useState({ width: 0, height: 0 });
 
@@ -21,22 +21,33 @@ export default function World(props){
 
     useResizeObserver({ ref: worldRef, onResize });
 
-    // Render when data is updated
+    // Render when window size changes
     useEffect(() => {
         if (isEmpty(WorldMap)) return;
         if (size.width === 0 || size.height === 0) return;
         d3.select('#world-svg').selectAll('*').remove();
-        let filteredMedalCounts = {}
-        filteredMedals.forEach(entry => {
-            if(filteredMedalCounts[entry.country]){
-                filteredMedalCounts[entry.country]++;
-            } else {
-                filteredMedalCounts[entry.country] = 1;
-            }
-        });
-        console.log(filteredMedalCounts)
+
+        
         drawChart(worldRef.current, size, filteredMedalCounts, props);
-    }, [filteredMedals, size]);
+        recolorChart(filteredMedalCounts, props);
+    }, [size]);
+
+    // Recolor when data is updated
+    useEffect(() => {
+        if (isEmpty(filteredMedals)) return;
+        let tempObj = {};
+        for(let i = 0; i < filteredMedals.length; i++){
+            const entry = filteredMedals[i];
+            
+            if(tempObj[entry.country]){
+                tempObj[entry.country]++;
+            } else {
+                tempObj[entry.country] = 1;
+            }
+        }
+        setFilteredMedalCounts(tempObj);
+        recolorChart(filteredMedalCounts, props);
+    }, [filteredMedals]);
 
     // Compile the data from which to render
     useEffect(() => {
@@ -82,14 +93,6 @@ function drawChart(svgElement, size, filteredMedalCounts, props){
     const centerX = size.width / 2;
     const centerY = size.height / 2;
 
-    const legendColorScale = d3.scaleLinear()
-        .domain([0, 16])
-        .range(['#fd0', '#640'])
-
-    const colorScale = d3.scalePow()
-        .domain([0, 1, Math.max(...Object.values(filteredMedalCounts))])
-        .range(['#ddd', '#fd5', legendColorScale(props.selectedDates.length)])
-
     const proj = d3.geoNaturalEarth1()
         .scale(0.3 * Math.min(size.width, size.height))
         .center([0, 0])
@@ -97,7 +100,8 @@ function drawChart(svgElement, size, filteredMedalCounts, props){
 
     const mapPath = d3.geoPath().projection(proj);
 
-    const g = svg.append('g');
+    const g = svg.append('g')
+        .attr('id', 'draw-group');
 
     const countries = g.append('g')
         .selectAll('path')
@@ -105,13 +109,6 @@ function drawChart(svgElement, size, filteredMedalCounts, props){
         .join('path')
         .attr('id', (d) => `country-geo-${d.properties.name}`)
         .attr('class', 'country-geo')
-        .attr('fill', function(d){
-            if(filteredMedalCounts[d.properties.name]){
-                return colorScale(filteredMedalCounts[d.properties.name]);
-            } else {
-                return '#eee';
-            }
-        })
         .attr('stroke', 'white')
         .attr('stroke-width', COUNTRY_BOUNDARY_WIDTH)
         .attr('d', mapPath)
@@ -127,5 +124,26 @@ function drawChart(svgElement, size, filteredMedalCounts, props){
 
     svg.call(zoom);
 
-    // return svg.node()
+    return svg.node()
+}
+
+function recolorChart(filteredMedalCounts, props){
+    const legendColorScale = d3.scaleLinear()
+        .domain([0, 16])
+        .range(['#fd0', '#640'])
+
+    const colorScale = d3.scalePow()
+        .domain([0, 1, Math.max(...Object.values(filteredMedalCounts))])
+        .range(['#ddd', '#fd5', legendColorScale(props.selectedDates.length)])
+
+    d3.select('#draw-group')
+        .selectAll('path')
+        .data(feature(WorldMap, WorldMap.objects.countries).features)
+        .attr('fill', function(d){
+            if(filteredMedalCounts[d.properties.name]){
+                return colorScale(filteredMedalCounts[d.properties.name]);
+            } else {
+                return '#eee';
+            }
+        })
 }
