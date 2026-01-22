@@ -43,11 +43,11 @@ body {
 }
 
 .date-selected {
-  fill: rgb(255, 240, 150);
+  fill: rgba(255, 240, 150, 0.5);
 }
 
 .date-selected:hover {
-  fill: rgb(255, 250, 200);
+  fill: rgba(255, 250, 200, 0.5);
 }
 
 .date-unselected {
@@ -55,5 +55,5 @@ body {
 }
 
 .date-unselected:hover {
-  fill: rgba(240, 240, 225, 0.7);
+  fill: rgba(240, 240, 225, 0.5);
 }

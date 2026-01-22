@@ -1,15 +1,19 @@
 import { Paper, Divider, Button, Grid, Stack, Box } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
 import * as d3 from "d3";
-import { isEmpty } from 'lodash';
+import { filter, isEmpty } from 'lodash';
 import { useResizeObserver, useDebounceCallback } from 'usehooks-ts';
 import WorldMap from '../../data/countries-110m.json'
 import countryCodes from '../../data/countryCodes.json';
 import { feature, mesh } from "topojson-client";
 
+const COUNTRY_BOUNDARY_WIDTH = 1;
+const MAX_ZOOM = 10;
+
 export default function World(props){
     const [filteredMedals, setFilteredMedals] = useState([])
     const worldRef = useRef(null);
+    const gRef = useRef(null);
 
     const [size, setSize] = useState({ width: 0, height: 0 });
 
@@ -17,6 +21,7 @@ export default function World(props){
 
     useResizeObserver({ ref: worldRef, onResize });
 
+    // Render when data is updated
     useEffect(() => {
         if (isEmpty(WorldMap)) return;
         if (size.width === 0 || size.height === 0) return;
@@ -30,9 +35,10 @@ export default function World(props){
             }
         });
         console.log(filteredMedalCounts)
-        drawChart(worldRef.current, size, filteredMedalCounts);
-    }, [props, size]);
+        drawChart(worldRef.current, size, filteredMedalCounts, props);
+    }, [filteredMedals, size]);
 
+    // Compile the data from which to render
     useEffect(() => {
 		if(props.medalCsv == null) return;
 		if(props.selectedCountries == null) return;
@@ -70,15 +76,19 @@ export default function World(props){
     )
 }
 
-function drawChart(svgElement, size, filteredMedalCounts){
+function drawChart(svgElement, size, filteredMedalCounts, props){
     const svg = d3.select(svgElement);
     svg.selectAll("*").remove();    // clear previous render
     const centerX = size.width / 2;
-    const centerY = size.height / 2; 
+    const centerY = size.height / 2;
 
-    const colorScale = d3.scaleLinear()
-        .domain([0, 1, 10])
-        .range(['#ddd', '#fd0', '#a80'])
+    const legendColorScale = d3.scaleLinear()
+        .domain([0, 16])
+        .range(['#fd0', '#640'])
+
+    const colorScale = d3.scalePow()
+        .domain([0, 1, Math.max(...Object.values(filteredMedalCounts))])
+        .range(['#ddd', '#fd5', legendColorScale(props.selectedDates.length)])
 
     const proj = d3.geoNaturalEarth1()
         .scale(0.3 * Math.min(size.width, size.height))
@@ -99,12 +109,23 @@ function drawChart(svgElement, size, filteredMedalCounts){
             if(filteredMedalCounts[d.properties.name]){
                 return colorScale(filteredMedalCounts[d.properties.name]);
             } else {
-                return '#ddd';
+                return '#eee';
             }
         })
         .attr('stroke', 'white')
-        .attr('stroke-width', 0.5)
+        .attr('stroke-width', COUNTRY_BOUNDARY_WIDTH)
         .attr('d', mapPath)
 
-    return svg.node()
+    // Zoom logic
+    function zoomManual(e){
+        g.attr('transform', e.transform);
+        countries.attr('stroke-width', COUNTRY_BOUNDARY_WIDTH / e.transform.k);
+    }
+    const zoom = d3.zoom()
+        .scaleExtent([1, MAX_ZOOM])
+        .on('zoom', zoomManual)
+
+    svg.call(zoom);
+
+    // return svg.node()
 }

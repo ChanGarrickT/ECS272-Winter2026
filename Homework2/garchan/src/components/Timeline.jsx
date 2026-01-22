@@ -31,7 +31,7 @@ export default function Timeline(props){
         if (size.width === 0 || size.height === 0) return;
         d3.select('#medalTally-svg').selectAll('*').remove();
         
-        drawChart(medalTallyRef.current, props.medalTally, props.selectedCountries, props.highlightedDates, props.selectedDates, size);
+        drawChart(medalTallyRef.current, size, props);
     }, [props.medalTally, props.selectedCountries, props.highlightedDates, props.selectedDates, size]);
 
     return (
@@ -55,16 +55,16 @@ export default function Timeline(props){
     )
 }
 
-function drawChart(svgElement, medalTally, countries, highlightedDates, selectedDates, size){
+function drawChart(svgElement, size, props){
     const svg = d3.select(svgElement);
     svg.selectAll('*').remove();    // clear previous render
 
     // Define scales
     const xScale = d3.scaleTime()
-        .domain([d3.timeParse("%Y-%m-%d")([medalTally[0].date]), d3.timeParse("%Y-%m-%d")([medalTally.at(-1).date])])
+        .domain([d3.timeParse("%Y-%m-%d")([props.medalTally[0].date]), d3.timeParse("%Y-%m-%d")([props.medalTally.at(-1).date])])
         .range([margin.left, size.width - margin.right]);   
     const yScale = d3.scaleLinear()
-        .domain([0, getMedalExtent(medalTally, countries)])
+        .domain([0, getMedalExtent(props.medalTally, props.selectedCountries)])
         .range([size.height - margin.bottom, margin.top]);
 
     // Highlight dates based on bubble chart
@@ -74,11 +74,11 @@ function drawChart(svgElement, medalTally, countries, highlightedDates, selected
 
     const wideBoxes = svg.append('g')
         .selectAll('rect')
-        .data(highlightedDates)
+        .data(props.highlightedDates)
         .join('rect')
-        .attr('x', d => xScale(d3.timeParse("%Y-%m-%d")(d)) - highlightWidth * 0.8 / 2)
+        .attr('x', d => xScale(d3.timeParse("%Y-%m-%d")(d)) - highlightWidth / 2)
         .attr('y', margin.top)
-        .attr('width', highlightWidth * 0.8)
+        .attr('width', highlightWidth)
         .attr('height', size.height - margin.top - margin.bottom)
         .attr('fill', '#dff')
 
@@ -87,11 +87,20 @@ function drawChart(svgElement, medalTally, countries, highlightedDates, selected
         .selectAll('rect')
         .data(daylist)
         .join('rect')
-        .attr('x', d => xScale(d3.timeParse("%Y-%m-%d")(d)) - highlightWidth * 0.5 / 2)
+        .attr('x', d => xScale(d3.timeParse("%Y-%m-%d")(d)) - highlightWidth / 2)
         .attr('y', margin.top)
-        .attr('width', highlightWidth * 0.5)
+        .attr('width', highlightWidth)
         .attr('height', size.height - margin.top - margin.bottom)
-        .attr('class', d => selectedDates.includes(d) ? 'date-selected' : 'date-unselected')
+        .attr('class', d => props.selectedDates.includes(d) ? 'date-selected' : 'date-unselected')
+        .on('click', function (event, d) {
+            props.setSelectedDates(prev => {
+                if (prev.includes(d)) {
+                    return prev.filter(date => date !== d);
+                } else {
+                    return [...prev, d];
+                }
+            });
+        });
 
     // Draw axes
     const xAxis = svg.append('g')
@@ -115,9 +124,9 @@ function drawChart(svgElement, medalTally, countries, highlightedDates, selected
     
     // Draw lines and their labels
     const paths = [];
-    countries.forEach(c => {
+    props.selectedCountries.forEach(c => {
         svg.append('path')
-            .datum(medalTally)
+            .datum(props.medalTally)
             .attr('fill', 'none')
             .attr('stroke', c.color)
             .attr('stroke-width', 1)
@@ -128,8 +137,8 @@ function drawChart(svgElement, medalTally, countries, highlightedDates, selected
 
         svg.append('g')
             .append('text')
-            .attr('transform', `translate(${size.width - margin.right + 5}, ${3 + yScale(medalTally.at(-1)[c.country].gold + medalTally.at(-1)[c.country].silver + medalTally.at(-1)[c.country].bronze)})`)
-            .text(countryCodes[c.country] + ' - ' + (medalTally.at(-1)[c.country].gold + medalTally.at(-1)[c.country].silver + medalTally.at(-1)[c.country].bronze))
+            .attr('transform', `translate(${size.width - margin.right + 5}, ${3 + yScale(props.medalTally.at(-1)[c.country].gold + props.medalTally.at(-1)[c.country].silver + props.medalTally.at(-1)[c.country].bronze)})`)
+            .text(countryCodes[c.country] + ' - ' + (props.medalTally.at(-1)[c.country].gold + props.medalTally.at(-1)[c.country].silver + props.medalTally.at(-1)[c.country].bronze))
             .style('fill', c.color)
             .style('font-size', '0.7rem')
         }
