@@ -30,6 +30,11 @@ const defaultCountries = [
 	{country: 'FRA', color: 'mediumorchid'}
 ];
 
+const defaultHighlightDates = [
+	'2024-08-11',
+	'2024-08-10'
+]
+
 const defaultDates = [
 	'2024-08-11'
 ]
@@ -38,7 +43,9 @@ function Layout() {
 	const [medalCsv, setMedalCsv] = useState(null);
 	const [medalTally, setMedalTally] = useState([]);
 	const [selectedCountries, setSelectedCountries] = useState(defaultCountries);
+	const [highlightedDates, setHighlightedDates] = useState([]);
 	const [selectedDates, setSelectedDates] = useState(defaultDates);
+	const [selectedMedals, setSelectedMedals] = useState({gold: 1, silver: 1, bronze: 1})
 
 	const [colorPalette, setColorPalette] = useState([]);
 
@@ -59,11 +66,16 @@ function Layout() {
 			dataFromCSV();
 		}, []);
 
+	const bubbleProps = {
+		setHighlightedDates: setHighlightedDates
+	}
+
 	// Variables and methods to pass to the World component
 	const worldProps = {
 		medalCsv: medalCsv,
 		selectedCountries: selectedCountries,
-		selectedDates: selectedDates
+		selectedDates: selectedDates,
+		selectedMedals: selectedMedals
 	}
 
 	// Variables and methods to pass to the Timeline component
@@ -72,8 +84,11 @@ function Layout() {
 		setMedalTally: setMedalTally,
 		selectedCountries: selectedCountries,
 		setSelectedCountries: setSelectedCountries,
+		highlightedDates: highlightedDates,
 		selectedDates: selectedDates,
-		setSelectedDates: setSelectedDates
+		setSelectedDates: setSelectedDates,
+		selectedMedals: selectedMedals,
+		setSelectedMedals: setSelectedMedals
 	}
 
     return (
@@ -84,7 +99,7 @@ function Layout() {
                 </Box>
                 <Grid container spacing={3} sx={{ height: "100%", minHeight: 0 }}>
                     <Grid size={6} sx={{ minHeight: 0 }}>
-                        <Bubble />
+                        <Bubble {...bubbleProps}/>
                     </Grid>
                     <Grid size={6} sx={{ minHeight: 0 }}>
                         <Stack gap={3} sx={{ height: "calc(100% - 20px)", minHeight: 0, maxHeight: "100%"}}>

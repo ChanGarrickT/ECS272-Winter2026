@@ -3,11 +3,12 @@ import { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { isEmpty } from 'lodash';
 import { useResizeObserver, useDebounceCallback } from 'usehooks-ts';
-import eventToCountryJson from '../../data/eventToCountryHierarchy.json'
+import eventToCountryJson from '../../data/eventToCountryHierarchyWithNamesDates.json'
+import countryCodes from '../../data/countryCodes.json'
 
 const margin = { top: 10, right: 170, bottom: 40, left: 50 };
 
-export default function Bubble(){
+export default function Bubble(props){
     const [athleteInfo, setAthleteInfo] = useState({});
     const bubbleRef = useRef(null);
     const bubbleContainerRef = useRef(null);
@@ -29,7 +30,7 @@ export default function Bubble(){
         if (size.width === 0 || size.height === 0) return;
         d3.select('#bubble-svg').selectAll('*').remove();
         
-        drawChart(bubbleRef.current, athleteInfo, size);
+        drawChart(bubbleRef.current, athleteInfo, size, props);
     }, [athleteInfo, size]);
 
     return (
@@ -44,6 +45,7 @@ export default function Bubble(){
                 <Paper sx={{flex: 1, minHeight: 0}}>
                     <Box id='bubble-content' ref={bubbleContainerRef} sx={{height: '100%', flex: 1, minHeight: 0}}>
                         <svg id='bubble-svg' ref={bubbleRef} style={{ width: '100%', height: '100%', minHeight: 0 }}></svg>
+                        <span id='bubble-focus'></span>
                     </Box>
                 </Paper>
             </Stack>
@@ -51,7 +53,7 @@ export default function Bubble(){
     )
 }
 
-function drawChart(svgElement, bubbleInfo, size){
+function drawChart(svgElement, bubbleInfo, size, props){
     const minDim = Math.min(size.width, size.height);
 
     const svg = d3.select(svgElement)
@@ -83,6 +85,16 @@ function drawChart(svgElement, bubbleInfo, size){
         .data(root.descendants().slice(1)) // slice(1) to not draw root
         .join('circle')
         .attr('fill', d => colorScale(d.depth))
+        .attr('pointer-events', d => !d.children ? 'none' : null) // clicking on leaf triggers parent
+        .attr('class', 'bubbles')
+        .on('click', function(event, d) {
+             if(focus !== d){ 
+                zoom(event, d);
+                d3.select('#bubble-focus').text(d.data.name);
+                if(d.children){props.setHighlightedDates(d.data.dates);}         
+                event.stopPropagation();
+            }
+        });
 
     // Draw labels
     const label = svg.append('g')
@@ -95,8 +107,14 @@ function drawChart(svgElement, bubbleInfo, size){
         .join('text')
             .style('fill-opacity', d => d.parent === root ? 1 : 0)
             .style('display', d => d.parent === root ? "inline" : "none")
-            .text(d => d.data.name)
+            .text(d => d.children ? d.data.name : countryCodes[d.data.name])
     
+    // Zoom to root by default or by clicking background
+    svg.on('click', function(e){
+        zoom(e, root);
+        d3.select('#bubble-focus').text('');
+        props.setHighlightedDates([]);
+    });
     let focus = root;
     let view;
     zoomTo([focus.x, focus.y, focus.r * 2]);
@@ -109,6 +127,24 @@ function drawChart(svgElement, bubbleInfo, size){
         label.attr("transform", d => `translate(${(d.x - v[0]) * k},${(d.y - v[1]) * k})`);
         node.attr("transform", d => `translate(${(d.x - v[0]) * k},${(d.y - v[1]) * k})`);
         node.attr("r", d => d.r * k);
+    }
+
+    function zoom(event, d){
+        focus = d;
+
+        const transition = svg.transition()
+            .duration(event.altKey ? 7500 : 750)
+            .tween("zoom", d => {
+            const i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2]);
+            return t => zoomTo(i(t));
+            });
+
+        label
+        .filter(function(d) { return d.parent === focus || this.style.display === "inline"; })
+        .transition(transition)
+            .style("fill-opacity", d => d.parent === focus ? 1 : 0)
+            .on("start", function(d) { if (d.parent === focus) this.style.display = "inline"; })
+            .on("end", function(d) { if (d.parent !== focus) this.style.display = "none"; });
     }
 
     return svg.node();

@@ -8,6 +8,13 @@ import countryCodes from '../../data/countryCodes.json';
 
 const margin = { top: 10, right: 170, bottom: 40, left: 50 };
 
+const daylist = [
+    '2024-07-27', '2024-07-28', '2024-07-29', '2024-07-30',
+    '2024-07-31', '2024-08-01', '2024-08-02', '2024-08-03',
+    '2024-08-04', '2024-08-05', '2024-08-06', '2024-08-07',
+    '2024-08-08', '2024-08-09', '2024-08-10', '2024-08-11'
+]
+
 export default function Timeline(props){
     const medalTallyRef = useRef(null);
 
@@ -24,8 +31,8 @@ export default function Timeline(props){
         if (size.width === 0 || size.height === 0) return;
         d3.select('#medalTally-svg').selectAll('*').remove();
         
-        drawChart(medalTallyRef.current, props.medalTally, props.selectedCountries, size);
-    }, [props.medalTally, props.selectedCountries, size]);
+        drawChart(medalTallyRef.current, props.medalTally, props.selectedCountries, props.highlightedDates, props.selectedDates, size);
+    }, [props.medalTally, props.selectedCountries, props.highlightedDates, props.selectedDates, size]);
 
     return (
         <Paper elevation={3} sx={{height: '100%', padding: '10px'}}>
@@ -48,7 +55,7 @@ export default function Timeline(props){
     )
 }
 
-function drawChart(svgElement, medalTally, countries, size){
+function drawChart(svgElement, medalTally, countries, highlightedDates, selectedDates, size){
     const svg = d3.select(svgElement);
     svg.selectAll('*').remove();    // clear previous render
 
@@ -59,6 +66,32 @@ function drawChart(svgElement, medalTally, countries, size){
     const yScale = d3.scaleLinear()
         .domain([0, getMedalExtent(medalTally, countries)])
         .range([size.height - margin.bottom, margin.top]);
+
+    // Highlight dates based on bubble chart
+    const x1 = d3.timeParse("%Y-%m-%d")('2024-07-27');
+    const x2 = d3.timeDay.offset(x1, 1);
+    const highlightWidth = (xScale(x2) - xScale(x1)); // Width of 1 day
+
+    const wideBoxes = svg.append('g')
+        .selectAll('rect')
+        .data(highlightedDates)
+        .join('rect')
+        .attr('x', d => xScale(d3.timeParse("%Y-%m-%d")(d)) - highlightWidth * 0.8 / 2)
+        .attr('y', margin.top)
+        .attr('width', highlightWidth * 0.8)
+        .attr('height', size.height - margin.top - margin.bottom)
+        .attr('fill', '#dff')
+
+    // Highlight selected dates
+    const narrowBoxes = svg.append('g')
+        .selectAll('rect')
+        .data(daylist)
+        .join('rect')
+        .attr('x', d => xScale(d3.timeParse("%Y-%m-%d")(d)) - highlightWidth * 0.5 / 2)
+        .attr('y', margin.top)
+        .attr('width', highlightWidth * 0.5)
+        .attr('height', size.height - margin.top - margin.bottom)
+        .attr('class', d => selectedDates.includes(d) ? 'date-selected' : 'date-unselected')
 
     // Draw axes
     const xAxis = svg.append('g')

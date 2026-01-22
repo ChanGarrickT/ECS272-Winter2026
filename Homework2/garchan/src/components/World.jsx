@@ -81,7 +81,7 @@ function drawChart(svgElement, size, filteredMedalCounts){
         .range(['#ddd', '#fd0', '#a80'])
 
     const proj = d3.geoNaturalEarth1()
-        .scale(0.35 * Math.min(size.width, size.height))
+        .scale(0.3 * Math.min(size.width, size.height))
         .center([0, 0])
         .translate([centerX, centerY]);
 
