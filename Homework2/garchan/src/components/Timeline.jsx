@@ -6,7 +6,7 @@ import { isEmpty } from 'lodash';
 import { useResizeObserver, useDebounceCallback } from 'usehooks-ts';
 import countryCodes from '../../data/countryCodes.json';
 
-const margin = { top: 10, right: 170, bottom: 40, left: 50 };
+const margin = { top: 10, right: 170, bottom: 25, left: 50 };
 
 const daylist = [
     '2024-07-27', '2024-07-28', '2024-07-29', '2024-07-30',
@@ -26,27 +26,55 @@ export default function Timeline(props){
 
     useResizeObserver({ ref: medalTallyRef, onResize });
 
+    // Draw chart when data is updated or window resized
     useEffect(() => {
         if (isEmpty(props.medalTally)) return;
         if (size.width === 0 || size.height === 0) return;
         d3.select('#medalTally-svg').selectAll('*').remove();
         
         drawChart(medalTallyRef.current, size, props);
-    }, [props.medalTally, props.selectedCountries, props.highlightedDates, props.selectedDates, size]);
+    }, [props.medalTally, props.selectedCountries, props.highlightedDates, props.selectedDates, props.selectedMedals, size]);
+
+    // Add listeners to widgets
+    useEffect(() => {
+        d3.select('#gold-check')
+            .on('change', event => props.setSelectedMedals(prev => ({...prev, gold: Number(event.target.checked)})));
+        d3.select('#silver-check')
+            .on('change', event => props.setSelectedMedals(prev => ({...prev, silver: Number(event.target.checked)})));
+        d3.select('#bronze-check')
+            .on('change', event => props.setSelectedMedals(prev => ({...prev, bronze: Number(event.target.checked)})));
+        d3.select('#select-all-dates')
+            .on('click', event => props.setSelectedDates(daylist));
+        d3.select('#clear-all-dates')
+            .on('click', event => props.setSelectedDates([]));
+    }, []);
 
     return (
         <Paper elevation={3} sx={{height: '100%', padding: '10px'}}>
             <Grid container id='medalTally-panel' sx={{height: '100%'}}>
-                <Grid size={10}>
+                <Grid size={10.5}>
                     <Paper id='medalTally-content' sx={{height: '100%', marginRight: '3px'}}>
                         <svg id='medalTally-svg' ref={medalTallyRef} width='100%' height='100%'></svg>
                     </Paper>
                 </Grid>
-                <Grid size={2}>
+                <Grid size={1.5}>
                     <Paper id='medalTally-widgets' sx={{height: '100%', marginLeft: '3px'}}>
                         <Stack>
-                            <Button>Widget 1</Button>
-                            <Button>Widget 2</Button>
+                            <Box sx={{margin: '5px 10px'}}>
+                                <input type="checkbox" id="gold-check" name="gold-check" defaultChecked/>
+                                <label htmlFor="gold-check"> Gold</label><br />
+                            </Box>
+                            <Box sx={{margin: '5px 10px'}}>
+                                <input type="checkbox" id="silver-check" name="silver-check" defaultChecked/>
+                                <label htmlFor="silver-check"> Silver</label><br />
+                            </Box>
+                            <Box sx={{margin: '5px 10px'}}>
+                                <input type="checkbox" id="bronze-check" name="bronze-check" defaultChecked/>
+                                <label htmlFor="bronze-check"> Bronze</label><br />
+                            </Box>
+                            <br />
+                            <Button id='select-all-dates' sx={{fontSize: '0.5rem'}}>Select All Days</Button>
+                            <Button id='clear-all-dates' sx={{fontSize: '0.5rem'}}>Clear All Days</Button>
                         </Stack>
                     </Paper>
                 </Grid>
@@ -64,7 +92,7 @@ function drawChart(svgElement, size, props){
         .domain([d3.timeParse("%Y-%m-%d")([props.medalTally[0].date]), d3.timeParse("%Y-%m-%d")([props.medalTally.at(-1).date])])
         .range([margin.left, size.width - margin.right]);   
     const yScale = d3.scaleLinear()
-        .domain([0, getMedalExtent(props.medalTally, props.selectedCountries)])
+        .domain([0, getMedalExtent(props.medalTally, props.selectedCountries, props.selectedMedals)])
         .range([size.height - margin.bottom, margin.top]);
 
     // Highlight dates based on bubble chart
@@ -111,11 +139,11 @@ function drawChart(svgElement, size, props){
         .call(d3.axisLeft(yScale).ticks(8));
 
     // Draw axis labels
-    svg.append('g')
-        .attr('transform', `translate(${size.width / 2 - margin.left}, ${size.height - 8})`)
-        .append('text')
-        .text('Date')
-        .style('font-size', '0.8rem');
+    // svg.append('g')
+    //     .attr('transform', `translate(${size.width / 2 - margin.left}, ${size.height - 8})`)
+    //     .append('text')
+    //     .text('Date')
+    //     .style('font-size', '0.8rem');
     svg.append('g')
         .attr('transform', `translate(20, ${(size.height - margin.bottom) / 2 + 37}) rotate(-90)`)
         .append('text')
@@ -132,22 +160,30 @@ function drawChart(svgElement, size, props){
             .attr('stroke-width', 1)
             .attr('d', d3.line()
                 .x(m => xScale(d3.timeParse("%Y-%m-%d")(m.date)))
-                .y(m => yScale(m[c.country].gold + m[c.country].silver + m[c.country].bronze))
+                .y(m => yScale(props.selectedMedals.gold * m[c.country].gold +
+                               props.selectedMedals.silver * m[c.country].silver +
+                               props.selectedMedals.bronze * m[c.country].bronze))
             )
 
         svg.append('g')
             .append('text')
-            .attr('transform', `translate(${size.width - margin.right + 5}, ${3 + yScale(props.medalTally.at(-1)[c.country].gold + props.medalTally.at(-1)[c.country].silver + props.medalTally.at(-1)[c.country].bronze)})`)
-            .text(countryCodes[c.country] + ' - ' + (props.medalTally.at(-1)[c.country].gold + props.medalTally.at(-1)[c.country].silver + props.medalTally.at(-1)[c.country].bronze))
+            .attr('transform', `translate(${size.width - margin.right + 5}, ${3 + yScale(props.selectedMedals.gold * props.medalTally.at(-1)[c.country].gold +
+                                                                                         props.selectedMedals.silver * props.medalTally.at(-1)[c.country].silver +
+                                                                                         props.selectedMedals.bronze * props.medalTally.at(-1)[c.country].bronze)})`)
+            .text(countryCodes[c.country] + ' - ' + (props.selectedMedals.gold * props.medalTally.at(-1)[c.country].gold + 
+                                                     props.selectedMedals.silver * props.medalTally.at(-1)[c.country].silver + 
+                                                     props.selectedMedals.bronze * props.medalTally.at(-1)[c.country].bronze))
             .style('fill', c.color)
             .style('font-size', '0.7rem')
         }
     );
 }
 
-function getMedalExtent(medalTally, countries){
+function getMedalExtent(medalTally, countries, medals){
     let highest = 0;
     const lastDay = medalTally.at(-1);
-    countries.forEach(c => highest = Math.max(highest, lastDay[c.country].gold + lastDay[c.country].silver + lastDay[c.country].bronze));
+    countries.forEach(c => highest = Math.max(highest, medals.gold * lastDay[c.country].gold + 
+                                                       medals.silver * lastDay[c.country].silver +
+                                                       medals.bronze * lastDay[c.country].bronze));
     return highest;
 }

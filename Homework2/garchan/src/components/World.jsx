@@ -25,20 +25,16 @@ export default function World(props){
     useEffect(() => {
         if (isEmpty(WorldMap)) return;
         if (size.width === 0 || size.height === 0) return;
-        d3.select('#world-svg').selectAll('*').remove();
-
-        
-        drawChart(worldRef.current, size, filteredMedalCounts, props);
+        d3.select('#world-svg').selectAll('*').remove();       
+        drawChart(worldRef.current, size);
         recolorChart(filteredMedalCounts, props);
     }, [size]);
 
     // Recolor when data is updated
     useEffect(() => {
-        if (isEmpty(filteredMedals)) return;
         let tempObj = {};
         for(let i = 0; i < filteredMedals.length; i++){
-            const entry = filteredMedals[i];
-            
+            const entry = filteredMedals[i];            
             if(tempObj[entry.country]){
                 tempObj[entry.country]++;
             } else {
@@ -46,7 +42,7 @@ export default function World(props){
             }
         }
         setFilteredMedalCounts(tempObj);
-        recolorChart(filteredMedalCounts, props);
+        recolorChart(tempObj, props);
     }, [filteredMedals]);
 
     // Compile the data from which to render
@@ -65,7 +61,6 @@ export default function World(props){
 			}
 			return dateIsSelected && countryIsSelected;
 		}));
-		console.log(filteredMedals);
 	}, [props.medalCsv, props.selectedCountries, props.selectedDates])
 
     return (
@@ -87,7 +82,7 @@ export default function World(props){
     )
 }
 
-function drawChart(svgElement, size, filteredMedalCounts, props){
+function drawChart(svgElement, size){
     const svg = d3.select(svgElement);
     svg.selectAll("*").remove();    // clear previous render
     const centerX = size.width / 2;
