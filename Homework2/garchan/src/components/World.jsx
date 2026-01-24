@@ -6,6 +6,8 @@ import { useResizeObserver, useDebounceCallback } from 'usehooks-ts';
 import WorldMap from '../../data/countries-110m.json'
 import countryCodes from '../../data/countryCodes.json';
 import { feature, mesh } from "topojson-client";
+import CountryList from './CountryList.jsx'
+import CountryTag from './CountryTag.jsx';
 
 const COUNTRY_BOUNDARY_WIDTH = 1;
 const MAX_ZOOM = 10;
@@ -33,14 +35,15 @@ export default function World(props){
     // Recolor when data is updated
     useEffect(() => {
         let tempObj = {};
+        for(let i = 0; i < props.selectedCountries.length; i++){
+            const longName = countryCodes[props.selectedCountries[i].country];
+            tempObj[longName] = 0;
+        }
         for(let i = 0; i < filteredMedals.length; i++){
             const entry = filteredMedals[i];            
-            if(tempObj[entry.country]){
-                tempObj[entry.country]++;
-            } else {
-                tempObj[entry.country] = 1;
-            }
+            tempObj[entry.country]++;
         }
+        console.log(tempObj);
         setFilteredMedalCounts(tempObj);
         recolorChart(tempObj, props);
     }, [filteredMedals]);
@@ -67,9 +70,18 @@ export default function World(props){
         <Paper elevation={3} sx={{height: '100%', boxSizing: 'border-box', padding: '10px'}}>
             <Stack id='world-panel' spacing={1} sx={{height: '100%'}}>
                 <Paper sx={{marginTop: '10px'}}>
-                    <Stack id='world-widgets' direction={'row'} sx={{ margin: '5px'}}>
-                        <Button>Widget 1</Button>
-                        <Button>Widget 2</Button>
+                    <Stack id='world-widgets' direction={'row'} spacing={1} alignItems={'center'} sx={{ margin: '5px'}}>
+                        <CountryList />
+                        <Button onClick={() => props.addCountry(fetchListValue())}>Add</Button>
+                        {props.selectedCountries.map((entry, idx) => {
+                            const tagProps = {
+                                country: entry.country,
+                                color: entry.color,
+                                index: idx,
+                                removeCountry: props.removeCountry
+                            }
+                            return <CountryTag key={idx} {...tagProps} />
+                        })}
                     </Stack>
                 </Paper>
                 <Paper sx={{flex: 1}}>
@@ -128,17 +140,21 @@ function recolorChart(filteredMedalCounts, props){
         .range(['#fd0', '#640'])
 
     const colorScale = d3.scalePow()
-        .domain([0, 1, Math.max(...Object.values(filteredMedalCounts))])
-        .range(['#ddd', '#fd5', legendColorScale(props.selectedDates.length)])
+        .domain([0, 1, Math.max(2, Math.max(...Object.values(filteredMedalCounts)))])
+        .range(['#ccc', '#fd5', legendColorScale(props.selectedDates.length)])
 
     d3.select('#draw-group')
         .selectAll('path')
         .data(feature(WorldMap, WorldMap.objects.countries).features)
         .attr('fill', function(d){
-            if(filteredMedalCounts[d.properties.name]){
+            if(d.properties.name in filteredMedalCounts){
                 return colorScale(filteredMedalCounts[d.properties.name]);
             } else {
                 return '#eee';
             }
         })
+}
+
+function fetchListValue(){
+    return d3.select('#country-select').property('value')
 }

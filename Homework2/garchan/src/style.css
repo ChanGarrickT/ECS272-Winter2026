@@ -57,3 +57,13 @@ body {
 .date-unselected:hover {
   fill: rgba(240, 240, 225, 0.5);
 }
+
+.x-button{
+  color: lightgray;
+  font-size: 1.2rem;
+  padding: 0 5px;
+}
+
+.x-button:hover {
+  color: red;
+}

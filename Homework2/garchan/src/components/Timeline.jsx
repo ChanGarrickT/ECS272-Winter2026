@@ -1,4 +1,3 @@
-import React, { use } from 'react'
 import { Paper, Divider, Button, Grid, Stack, Box } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
@@ -61,20 +60,20 @@ export default function Timeline(props){
                     <Paper id='medalTally-widgets' sx={{height: '100%', marginLeft: '3px'}}>
                         <Stack>
                             <Box sx={{margin: '5px 10px'}}>
-                                <input type="checkbox" id="gold-check" name="gold-check" defaultChecked/>
-                                <label htmlFor="gold-check"> Gold</label><br />
+                                <input type='checkbox' id='gold-check' name='gold-check' defaultChecked/>
+                                <label htmlFor="gold-check" style={{fontSize: '0.8rem'}}> 🥇 Gold</label><br />
                             </Box>
                             <Box sx={{margin: '5px 10px'}}>
-                                <input type="checkbox" id="silver-check" name="silver-check" defaultChecked/>
-                                <label htmlFor="silver-check"> Silver</label><br />
+                                <input type='checkbox' id='silver-check' name='silver-check' defaultChecked/>
+                                <label htmlFor="silver-check" style={{fontSize: '0.8rem'}}> 🥈 Silver</label><br />
                             </Box>
                             <Box sx={{margin: '5px 10px'}}>
-                                <input type="checkbox" id="bronze-check" name="bronze-check" defaultChecked/>
-                                <label htmlFor="bronze-check"> Bronze</label><br />
+                                <input type='checkbox' id='bronze-check' name='bronze-check' defaultChecked/>
+                                <label htmlFor="bronze-check" style={{fontSize: '0.8rem'}}> 🥉 Bronze</label><br />
                             </Box>
                             <br />
-                            <Button id='select-all-dates' sx={{fontSize: '0.5rem'}}>Select All Days</Button>
-                            <Button id='clear-all-dates' sx={{fontSize: '0.5rem'}}>Clear All Days</Button>
+                            <Button id='select-all-dates' sx={{fontSize: '0.7rem'}}>All 📅</Button>
+                            <Button id='clear-all-dates' sx={{fontSize: '0.7rem'}}>Clear 📅</Button>
                         </Stack>
                     </Paper>
                 </Grid>

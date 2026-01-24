@@ -22,6 +22,7 @@ const theme = createTheme({
     },
 });
 
+// Static state for debugging
 const defaultCountries = [
 	{country: 'USA', color: 'dodgerblue'},
 	{country: 'CHN', color: 'crimson'},
@@ -42,12 +43,14 @@ const defaultDates = [
 function Layout() {
 	const [medalCsv, setMedalCsv] = useState(null);
 	const [medalTally, setMedalTally] = useState([]);
-	const [selectedCountries, setSelectedCountries] = useState(defaultCountries);
+	const [selectedCountries, setSelectedCountries] = useState([]);
 	const [highlightedDates, setHighlightedDates] = useState([]);
-	const [selectedDates, setSelectedDates] = useState(defaultDates);
+	const [selectedDates, setSelectedDates] = useState([]);
 	const [selectedMedals, setSelectedMedals] = useState({gold: 1, silver: 1, bronze: 1})
 
-	const [colorPalette, setColorPalette] = useState([]);
+	const [colorPalette, setColorPalette] = useState([
+		'darkcyan', 'sienna', 'darkviolet', 'forestgreen', 'crimson', 'dodgerblue'
+	]);
 
 	useEffect(() => {
 		// Read CSV once HTML element is loaded
@@ -66,19 +69,52 @@ function Layout() {
 			dataFromCSV();
 		}, []);
 
+	// Add and remove a countries from inspection list
+	// This implementation allows countries to maintain consistent colors when selection changes
+	function addCountry(code){
+		if(selectedCountries.length >= 6){
+			alert('Maximum 6 countries allowed');
+			return;
+		}
+		// Prevent duplicate selection
+		for(let i = 0; i < selectedCountries.length; i++){
+			if(selectedCountries[i].country === code) return;
+		}
+		
+		const color = colorPalette.at(-1)
+		setSelectedCountries(prev => [...prev, {country: code, color: color}])
+		// Remove color from palette
+		setColorPalette(prev => {
+			let temp = [...prev]
+			temp.pop()
+			return temp
+		})
+	}
+
+	function removeCountry(idx, color){
+		setSelectedCountries(prev => {
+			let temp = [...prev]
+			temp.splice(idx, 1)
+			return temp
+		});
+		// Restore color to palette
+		setColorPalette(prev => [color, ...prev])
+	}
+
+	// Variables and methods to pass to children
 	const bubbleProps = {
 		setHighlightedDates: setHighlightedDates
 	}
 
-	// Variables and methods to pass to the World component
 	const worldProps = {
 		medalCsv: medalCsv,
 		selectedCountries: selectedCountries,
 		selectedDates: selectedDates,
-		selectedMedals: selectedMedals
+		selectedMedals: selectedMedals,
+		addCountry: addCountry,
+		removeCountry: removeCountry
 	}
 
-	// Variables and methods to pass to the Timeline component
 	const timelineProps = {
 		medalTally: medalTally,
 		setMedalTally: setMedalTally,
