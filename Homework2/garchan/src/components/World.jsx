@@ -129,30 +129,36 @@ function drawChart(svgElement, colorScale, size){
     const legendScale = d3.scaleLinear()
         .domain([1, 126])
         .range([size.height - 1, size.height - 126])
+    
+    svg.append('g')
+        .attr('transform', `translate(20, ${(size.height - margin.bottom + 25)}) rotate(-90)`)
+        .append('text')
+        .text('Medals Over Selected Days')
+        .style('font-size', '0.8rem');
 
     svg.append('g')
-        .attr('transform', `translate(${margin.left + 1}, ${-margin.bottom})`)
+        .attr('transform', `translate(${margin.left + 6}, ${-margin.bottom})`)
         .call(d3.axisLeft(legendScale).tickValues([20, 40, 60, 80, 100, 120]))
     
     svg.append('g')
-        .attr('transform', `translate(${margin.left - 13}, ${(size.height - margin.bottom + 13)})`)
+        .attr('transform', `translate(${margin.left - 8}, ${(size.height - margin.bottom + 13)})`)
         .append('text')
         .text('0')
         .style('font-size', '0.65rem');
 
-    svg.append('g')
+    svg.append('g')     // gradient
         .selectAll('rect')
         .data(Array.from({length: 126}, (_, idx) => 1 + idx))
         .join('rect')
-        .attr('x', margin.left)
+        .attr('x', margin.left + 5)
         .attr('y', d => size.height - margin.bottom - d)
         .attr('width', 20)
         .attr('height', 1)
         .attr('fill', d => colorScale(d))
 
-    svg.append('g')
+    svg.append('g')     // gray for 0
         .append('rect')
-        .attr('x', margin.left)
+        .attr('x', margin.left + 5)
         .attr('y', size.height - margin.bottom)
         .attr('width', 20)
         .attr('height', 20)

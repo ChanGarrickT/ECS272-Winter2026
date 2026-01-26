@@ -26,7 +26,7 @@ const theme = createTheme({
 const defaultCountries = [
 	{country: 'USA', color: 'dodgerblue'},
 	{country: 'CHN', color: 'crimson'},
-	{country: 'JPN', color: 'limegreen'},
+	{country: 'JPN', color: 'mediumseagreen'},
 	{country: 'AUS', color: 'mediumorchid'},
 	{country: 'FRA', color: 'darkorange'}
 ];

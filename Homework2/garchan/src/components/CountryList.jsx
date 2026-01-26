@@ -11,11 +11,7 @@ export default function CountryList(){
         <Box>
             <select id='country-select'>
                 {Object.keys(countryCodes).map((code) => {
-                    if(code === 'USA'){
-                        return <option selected key={code} value={code}>{code} - {countryCodes[code]}</option>
-                    } else {
-                        return <option key={code} value={code}>{code} - {countryCodes[code]}</option>
-                    }                   
+                    return <option key={code} value={code}>{code} - {countryCodes[code]}</option>                                     
                 })}
             </select>
         </Box>

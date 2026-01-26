@@ -5,7 +5,7 @@ import { isEmpty } from 'lodash';
 import { useResizeObserver, useDebounceCallback } from 'usehooks-ts';
 import countryCodes from '../../data/countryCodes.json';
 
-const margin = { top: 10, right: 170, bottom: 25, left: 50 };
+const margin = { top: 10, right: 40, bottom: 25, left: 50 };
 
 const daylist = [
     '2024-07-27', '2024-07-28', '2024-07-29', '2024-07-30',
@@ -16,6 +16,7 @@ const daylist = [
 
 export default function Timeline(props){
     const medalTallyRef = useRef(null);
+    const timelineContainerRef = useRef(null);
 
     const [size, setSize] = useState({ width: 0, height: 0 });   
     const onResize = useDebounceCallback((size) => setSize(size), 200);
@@ -27,8 +28,8 @@ export default function Timeline(props){
         if (isEmpty(props.medalTally)) return;
         if (size.width === 0 || size.height === 0) return;
         d3.select('#medalTally-svg').selectAll('*').remove();
-        
-        drawChart(medalTallyRef.current, size, props);
+
+        drawChart(medalTallyRef.current, timelineContainerRef.current, size, props);
     }, [props.medalTally, props.selectedCountries, props.highlightedDates, props.selectedDates, props.selectedMedals, size]);
 
     // Add listeners to widgets
@@ -46,10 +47,10 @@ export default function Timeline(props){
     }, []);
 
     return (
-        <Paper elevation={3} sx={{height: '100%', padding: '10px'}}>
+        <Paper elevation={3} ref={timelineContainerRef} sx={{height: '100%', padding: '10px'}}>
             <Grid container id='medalTally-panel' sx={{height: '100%'}}>
                 <Grid size={10.5}>
-                    <Paper id='medalTally-content' sx={{height: '100%', marginRight: '3px'}}>
+                    <Paper id='medalTally-content'  sx={{height: '100%', marginRight: '3px'}}>
                         <svg id='medalTally-svg' ref={medalTallyRef} width='100%' height='100%'></svg>
                     </Paper>
                 </Grid>
@@ -79,9 +80,18 @@ export default function Timeline(props){
     )
 }
 
-function drawChart(svgElement, size, props){
+function drawChart(svgElement, timelineElement, size, props){
     const svg = d3.select(svgElement);
     svg.selectAll('*').remove();    // clear previous render
+
+    // Tooltip logic
+    d3.select(timelineElement).selectAll('.tooltip').remove();
+    const tooltip = d3.select(timelineElement).append('div')
+        .attr('class', 'tooltip')
+        .style('left', `${timelineElement.getBoundingClientRect().x + timelineElement.getBoundingClientRect().width/2}px`)
+        .style('top', `${timelineElement.getBoundingClientRect().y - 210}px`)
+        .style('opacity', 0)
+        .style('z-index', 1);
 
     // Define scales
     const xScale = d3.scaleTime()
@@ -124,12 +134,14 @@ function drawChart(svgElement, size, props){
                     return [...prev, d];
                 }
             });
-        });
+        })
+        .on('mouseover', function(event, d){ showToolTip(tooltip, this, props, d) })
+        .on('mouseout', function(event, d){ hideToolTip(tooltip)})
 
     // Draw axes
     const xAxis = svg.append('g')
         .attr('transform', `translate(0, ${size.height - margin.bottom})`)
-        .call(d3.axisBottom(xScale).ticks(9));
+        .call(d3.axisBottom(xScale).ticks(17));
     const yAxis = svg.append('g')
         .attr('transform', `translate(${margin.left}, 0)`)
         .call(d3.axisLeft(yScale).ticks(8));
@@ -161,16 +173,16 @@ function drawChart(svgElement, size, props){
                                props.selectedMedals.bronze * m[c.country].bronze))
             )
 
-        svg.append('g')
-            .append('text')
-            .attr('transform', `translate(${size.width - margin.right + 5}, ${3 + yScale(props.selectedMedals.gold * props.medalTally.at(-1)[c.country].gold +
-                                                                                         props.selectedMedals.silver * props.medalTally.at(-1)[c.country].silver +
-                                                                                         props.selectedMedals.bronze * props.medalTally.at(-1)[c.country].bronze)})`)
-            .text(countryCodes[c.country] + ' - ' + (props.selectedMedals.gold * props.medalTally.at(-1)[c.country].gold + 
-                                                     props.selectedMedals.silver * props.medalTally.at(-1)[c.country].silver + 
-                                                     props.selectedMedals.bronze * props.medalTally.at(-1)[c.country].bronze))
-            .style('fill', c.color)
-            .style('font-size', '0.7rem')
+        // svg.append('g')
+        //     .append('text')
+        //     .attr('transform', `translate(${size.width - margin.right + 5}, ${3 + yScale(props.selectedMedals.gold * props.medalTally.at(-1)[c.country].gold +
+        //                                                                                  props.selectedMedals.silver * props.medalTally.at(-1)[c.country].silver +
+        //                                                                                  props.selectedMedals.bronze * props.medalTally.at(-1)[c.country].bronze)})`)
+        //     .text(countryCodes[c.country] + ' - ' + (props.selectedMedals.gold * props.medalTally.at(-1)[c.country].gold + 
+        //                                              props.selectedMedals.silver * props.medalTally.at(-1)[c.country].silver + 
+        //                                              props.selectedMedals.bronze * props.medalTally.at(-1)[c.country].bronze))
+        //     .style('fill', c.color)
+        //     .style('font-size', '0.7rem')
         }
     );
 }
@@ -182,4 +194,31 @@ function getMedalExtent(medalTally, countries, medals){
                                                        medals.silver * lastDay[c.country].silver +
                                                        medals.bronze * lastDay[c.country].bronze));
     return highest;
+}
+
+function showToolTip(tooltip, box, props, d){
+    tooltip.selectAll('*').remove()
+    const tallyEntry = props.medalTally[daylist.indexOf(d) + 1]
+    tooltip.append('h3').text('Total to Date:')
+    for(let i = 0; i < props.selectedCountries.length; i++){
+        const country = props.selectedCountries[i].country
+        const count = props.selectedMedals.gold * tallyEntry[country].gold +
+                        props.selectedMedals.silver * tallyEntry[country].silver +
+                        props.selectedMedals.bronze * tallyEntry[country].bronze;
+        tooltip.append('p')
+            .style('color', `${props.selectedCountries[i].color}`)
+            .text(`${countryCodes[country]}: ${count}`)
+    }
+    
+    tooltip.transition()
+        .duration(150)
+        .style('left', `${box.getBoundingClientRect().x}px`)
+        .style('top', `${box.getBoundingClientRect().y - 210}px`)
+        .style('opacity', 1)      
+}
+
+function hideToolTip(tooltip){
+    tooltip.transition()
+        .duration(150)
+        .style('opacity', 0)
 }
