@@ -59,21 +59,21 @@ export default function Timeline(props){
                 <Grid size={1.5}>
                     <Paper id='medalTally-widgets' sx={{height: '100%', marginLeft: '3px'}}>
                         <Stack>
-                            <Box sx={{margin: '5px 10px'}}>
+                            <Box sx={{margin: '5px 7px'}}>
                                 <input type='checkbox' id='gold-check' name='gold-check' defaultChecked/>
-                                <label htmlFor="gold-check" style={{fontSize: '0.8rem'}}> 🥇 Gold</label><br />
+                                <label htmlFor="gold-check" style={{fontSize: '0.75rem'}}> 🥇 Gold</label><br />
                             </Box>
-                            <Box sx={{margin: '5px 10px'}}>
+                            <Box sx={{margin: '5px 7px'}}>
                                 <input type='checkbox' id='silver-check' name='silver-check' defaultChecked/>
-                                <label htmlFor="silver-check" style={{fontSize: '0.8rem'}}> 🥈 Silver</label><br />
+                                <label htmlFor="silver-check" style={{fontSize: '0.75rem'}}> 🥈 Silver</label><br />
                             </Box>
-                            <Box sx={{margin: '5px 10px'}}>
+                            <Box sx={{margin: '5px 7px'}}>
                                 <input type='checkbox' id='bronze-check' name='bronze-check' defaultChecked/>
-                                <label htmlFor="bronze-check" style={{fontSize: '0.8rem'}}> 🥉 Bronze</label><br />
+                                <label htmlFor="bronze-check" style={{fontSize: '0.75rem'}}> 🥉 Bronze</label><br />
                             </Box>
                             <br />
-                            <Button id='select-all-dates' sx={{fontSize: '0.7rem'}}>All 📅</Button>
-                            <Button id='clear-all-dates' sx={{fontSize: '0.7rem'}}>Clear 📅</Button>
+                            <Button id='select-all-dates' variant='outlined' sx={{fontSize: '0.65rem', margin: '5px 5px'}}>All 📅</Button>
+                            <Button id='clear-all-dates' variant='outlined' sx={{fontSize: '0.65rem', margin: '5px 5px'}}>Clear 📅</Button>
                         </Stack>
                     </Paper>
                 </Grid>

@@ -11,6 +11,7 @@ import CountryTag from './CountryTag.jsx';
 
 const COUNTRY_BOUNDARY_WIDTH = 1;
 const MAX_ZOOM = 10;
+const margin = {left: 50, bottom: 50};
 
 export default function World(props){
     const [filteredMedals, setFilteredMedals] = useState([]);           // details with no counts
@@ -23,13 +24,17 @@ export default function World(props){
 
     useResizeObserver({ ref: worldRef, onResize });
 
+    const colorScale = d3.scalePow()
+        .domain([0, 1, 126])
+        .range(['#ccc', '#fd5', '#640'])
+
     // Render when window size changes
     useEffect(() => {
         if (isEmpty(WorldMap)) return;
         if (size.width === 0 || size.height === 0) return;
         d3.select('#world-svg').selectAll('*').remove();       
-        drawChart(worldRef.current, size);
-        recolorChart(filteredMedalCounts, props);
+        drawChart(worldRef.current, colorScale, size);
+        recolorChart(filteredMedalCounts, colorScale);
     }, [size]);
 
     // Recolor when data is updated
@@ -43,9 +48,8 @@ export default function World(props){
             const entry = filteredMedals[i];            
             tempObj[entry.country]++;
         }
-        console.log(tempObj);
         setFilteredMedalCounts(tempObj);
-        recolorChart(tempObj, props);
+        recolorChart(tempObj, colorScale);
     }, [filteredMedals]);
 
     // Compile the data from which to render
@@ -62,23 +66,24 @@ export default function World(props){
 					break;
 				}
 			}
-			return dateIsSelected && countryIsSelected;
+            const medalIsSelected = Boolean(props.selectedMedals[entry.medal])
+			return dateIsSelected && countryIsSelected && medalIsSelected;
 		}));
-	}, [props.medalCsv, props.selectedCountries, props.selectedDates])
+	}, [props.medalCsv, props.selectedCountries, props.selectedDates, props.selectedMedals])
 
     return (
         <Paper elevation={3} sx={{height: '100%', boxSizing: 'border-box', padding: '10px'}}>
             <Stack id='world-panel' spacing={1} sx={{height: '100%'}}>
                 <Paper sx={{marginTop: '10px'}}>
-                    <Stack id='world-widgets' direction={'row'} spacing={1} alignItems={'center'} sx={{ margin: '5px'}}>
+                    <Stack id='world-widgets' direction={'row'} spacing={3} alignItems={'center'} sx={{ margin: '5px'}}>
                         <CountryList />
-                        <Button onClick={() => props.addCountry(fetchListValue())}>Add</Button>
+                        <Button variant='outlined' onClick={() => props.addCountry(fetchListValue())}>Add</Button>
                         {props.selectedCountries.map((entry, idx) => {
                             const tagProps = {
                                 country: entry.country,
                                 color: entry.color,
                                 index: idx,
-                                removeCountry: props.removeCountry
+                                removeCountry: () => props.removeCountry(idx, entry.color)
                             }
                             return <CountryTag key={idx} {...tagProps} />
                         })}
@@ -94,7 +99,7 @@ export default function World(props){
     )
 }
 
-function drawChart(svgElement, size){
+function drawChart(svgElement, colorScale, size){
     const svg = d3.select(svgElement);
     svg.selectAll("*").remove();    // clear previous render
     const centerX = size.width / 2;
@@ -120,6 +125,39 @@ function drawChart(svgElement, size){
         .attr('stroke-width', COUNTRY_BOUNDARY_WIDTH)
         .attr('d', mapPath)
 
+    // Draw legend
+    const legendScale = d3.scaleLinear()
+        .domain([1, 126])
+        .range([size.height - 1, size.height - 126])
+
+    svg.append('g')
+        .attr('transform', `translate(${margin.left + 1}, ${-margin.bottom})`)
+        .call(d3.axisLeft(legendScale).tickValues([20, 40, 60, 80, 100, 120]))
+    
+    svg.append('g')
+        .attr('transform', `translate(${margin.left - 13}, ${(size.height - margin.bottom + 13)})`)
+        .append('text')
+        .text('0')
+        .style('font-size', '0.65rem');
+
+    svg.append('g')
+        .selectAll('rect')
+        .data(Array.from({length: 126}, (_, idx) => 1 + idx))
+        .join('rect')
+        .attr('x', margin.left)
+        .attr('y', d => size.height - margin.bottom - d)
+        .attr('width', 20)
+        .attr('height', 1)
+        .attr('fill', d => colorScale(d))
+
+    svg.append('g')
+        .append('rect')
+        .attr('x', margin.left)
+        .attr('y', size.height - margin.bottom)
+        .attr('width', 20)
+        .attr('height', 20)
+        .attr('fill', '#ccc')
+
     // Zoom logic
     function zoomManual(e){
         g.attr('transform', e.transform);
@@ -134,15 +172,7 @@ function drawChart(svgElement, size){
     return svg.node()
 }
 
-function recolorChart(filteredMedalCounts, props){
-    const legendColorScale = d3.scaleLinear()
-        .domain([0, 16])
-        .range(['#fd0', '#640'])
-
-    const colorScale = d3.scalePow()
-        .domain([0, 1, Math.max(2, Math.max(...Object.values(filteredMedalCounts)))])
-        .range(['#ccc', '#fd5', legendColorScale(props.selectedDates.length)])
-
+function recolorChart(filteredMedalCounts, colorScale){
     d3.select('#draw-group')
         .selectAll('path')
         .data(feature(WorldMap, WorldMap.objects.countries).features)

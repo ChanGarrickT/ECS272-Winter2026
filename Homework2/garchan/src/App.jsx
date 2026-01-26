@@ -26,9 +26,9 @@ const theme = createTheme({
 const defaultCountries = [
 	{country: 'USA', color: 'dodgerblue'},
 	{country: 'CHN', color: 'crimson'},
-	{country: 'JPN', color: 'lightseagreen'},
-	{country: 'AUS', color: 'orange'},
-	{country: 'FRA', color: 'mediumorchid'}
+	{country: 'JPN', color: 'limegreen'},
+	{country: 'AUS', color: 'mediumorchid'},
+	{country: 'FRA', color: 'darkorange'}
 ];
 
 const defaultHighlightDates = [
@@ -43,22 +43,21 @@ const defaultDates = [
 function Layout() {
 	const [medalCsv, setMedalCsv] = useState(null);
 	const [medalTally, setMedalTally] = useState([]);
-	const [selectedCountries, setSelectedCountries] = useState([]);
+	const [selectedCountries, setSelectedCountries] = useState(defaultCountries);
 	const [highlightedDates, setHighlightedDates] = useState([]);
-	const [selectedDates, setSelectedDates] = useState([]);
+	const [selectedDates, setSelectedDates] = useState(defaultDates);
 	const [selectedMedals, setSelectedMedals] = useState({gold: 1, silver: 1, bronze: 1})
 
-	const [colorPalette, setColorPalette] = useState([
-		'darkcyan', 'sienna', 'darkviolet', 'forestgreen', 'crimson', 'dodgerblue'
-	]);
+	const [colorPalette, setColorPalette] = useState(['mediumblue']);
 
 	useEffect(() => {
 		// Read CSV once HTML element is loaded
 		const dataFromCSV = async () => {
+			const codeToMedal = ['0', 'gold', 'silver', 'bronze'];
 			try {
 				const csvData = await d3.csv('../../data/medals.csv', d => {
 					// This callback allows you to rename the keys, format values, and drop columns you don't need
-					return {date: d.medal_date, medal: parseInt(d.medal_code), countryCode: d.country_code, country: d.country, discipline: d.discipline, event: d.event};
+					return {date: d.medal_date, medal: codeToMedal[parseInt(d.medal_code)], countryCode: d.country_code, country: d.country, discipline: d.discipline, event: d.event};
 				});
 				setMedalCsv(csvData);
 				setMedalTally(tally(csvData));
@@ -80,7 +79,7 @@ function Layout() {
 		for(let i = 0; i < selectedCountries.length; i++){
 			if(selectedCountries[i].country === code) return;
 		}
-		
+
 		const color = colorPalette.at(-1)
 		setSelectedCountries(prev => [...prev, {country: code, color: color}])
 		// Remove color from palette
@@ -162,8 +161,6 @@ function App() {
     );
 }
 
-const medalCodeToType = {1: 'gold', 2: 'silver', 3: 'bronze'};
-
 function tally(data){
     let currentDate = '2024-07-26';
     let currentTally = getEmptyRow();
@@ -173,7 +170,7 @@ function tally(data){
             results.push(JSON.parse(JSON.stringify({date: currentDate, ...currentTally})));
             currentDate = d.date;
         }
-        currentTally[d.countryCode][medalCodeToType[d.medal]]++;
+        currentTally[d.countryCode][d.medal]++;
     })
     results.push(JSON.parse(JSON.stringify({date: currentDate, ...currentTally})));
     return results;
