@@ -9,7 +9,7 @@ export default function CountryTag(props){
     return (
         <Box key={props.country} sx={{color: props.color}}>
             {props.country}
-            <span className="x-button" onClick={() => props.removeCountry(props.idx, props.color)}>×</span>
+            <span className="x-button" onClick={() => props.removeCountry(props.index, props.color)}>×</span>
         </Box>
     )
 }

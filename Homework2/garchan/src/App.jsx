@@ -102,7 +102,8 @@ function Layout() {
 
 	// Variables and methods to pass to children
 	const bubbleProps = {
-		setHighlightedDates: setHighlightedDates
+		setHighlightedDates: setHighlightedDates,
+		selectedDates: selectedDates
 	}
 
 	const worldProps = {

@@ -8,8 +8,15 @@ import countryCodes from '../../data/countryCodes.json'
 
 const margin = { top: 10, right: 170, bottom: 40, left: 50 };
 
+// Color scale
+const colorScale = d3.scaleLinear()
+    .domain([0, 3])
+    .range(['white', '#ddd'])
+    .interpolate(d3.interpolateHcl);
+
 export default function Bubble(props){
     const [athleteInfo, setAthleteInfo] = useState({});
+    const [highlightEvents, setHighlightEvents] = useState(true);
     const bubbleRef = useRef(null);
     const bubbleContainerRef = useRef(null);
 
@@ -25,21 +32,27 @@ export default function Bubble(props){
         setAthleteInfo(eventToCountryJson);
     }, []);
 
+    // Redraw when panel size changes
     useEffect(() => {
         if (isEmpty(athleteInfo)) return;
         if (size.width === 0 || size.height === 0) return;
         d3.select('#bubble-svg').selectAll('*').remove();
         
         drawChart(bubbleRef.current, athleteInfo, size, props);
+        highlightBubble(highlightEvents, props.selectedDates);
     }, [athleteInfo, size]);
+
+    // Handle coloring circles independent of zoom
+    useEffect(() => {
+        highlightBubble(highlightEvents, props.selectedDates);
+    }, [props.selectedDates, highlightEvents])
 
     return (
         <Paper elevation={3} sx={{height: '100%', boxSizing: 'border-box', padding: '10px', minHeight: 0}}>
             <Stack id='bubble-panel' spacing={1} sx={{height: '100%'}}>
                 <Paper sx={{marginTop: '10px'}}>
                     <Stack id='bubble-widgets' direction={'row'} sx={{ margin: '5px'}}>
-                        <Button>Widget 1</Button>
-                        <Button>Widget 2</Button>
+                        <Button variant='outlined' onClick={() => setHighlightEvents((prev) => !prev)}>Toggle Highlight Events by Dates</Button>
                     </Stack>
                 </Paper>
                 <Paper sx={{flex: 1, minHeight: 0}}>
@@ -62,12 +75,6 @@ function drawChart(svgElement, bubbleInfo, size, props){
         .style('height', '100%')
         .style('display', 'block');
     svg.selectAll('*').remove();    // clear previous render
-
-    // Color scale
-    const colorScale = d3.scaleLinear()
-        .domain([0, 3])
-        .range(['white', '#ccc'])
-        .interpolate(d3.interpolateHcl);
     
     // Pack
     const pack = data => d3.pack()
@@ -86,7 +93,7 @@ function drawChart(svgElement, bubbleInfo, size, props){
         .join('circle')
         .attr('fill', d => colorScale(d.depth))
         .attr('pointer-events', d => !d.children ? 'none' : null) // clicking on leaf triggers parent
-        .attr('class', 'bubbles')
+        .attr('class', d => d.depth === 2 ? `bubbles bubble-d2 bubble-${d.data.dates[0]}` : 'bubbles')
         .on('click', function(event, d) {
              if(focus !== d){ 
                 zoom(event, d);
@@ -119,6 +126,7 @@ function drawChart(svgElement, bubbleInfo, size, props){
     let view;
     zoomTo([focus.x, focus.y, focus.r * 2]);
 
+    // Reused from https://observablehq.com/@d3/zoomable-circle-packing
     function zoomTo(v) {
         const k = minDim / v[2];
 
@@ -148,4 +156,16 @@ function drawChart(svgElement, bubbleInfo, size, props){
     }
 
     return svg.node();
+}
+
+// Highlight events in which the medal ceremony was on a day selected by the user
+function highlightBubble(highlight, selectedDates){
+    d3.selectAll('.bubble-d2')
+        .attr('fill', colorScale(2))
+    if(highlight){
+        for(let i = 0; i < selectedDates.length; i++){
+            d3.selectAll(`.bubble-${selectedDates[i]}`)
+                .attr('fill', '#FFF096')  
+        }      
+    }
 }

@@ -17,10 +17,7 @@ const daylist = [
 export default function Timeline(props){
     const medalTallyRef = useRef(null);
 
-    const [size, setSize] = useState({ width: 0, height: 0 });
-
-    const [colorPalette, setColorPalette] = useState([]);
-    
+    const [size, setSize] = useState({ width: 0, height: 0 });   
     const onResize = useDebounceCallback((size) => setSize(size), 200);
 
     useResizeObserver({ ref: medalTallyRef, onResize });

@@ -83,7 +83,7 @@ export default function World(props){
                                 country: entry.country,
                                 color: entry.color,
                                 index: idx,
-                                removeCountry: () => props.removeCountry(idx, entry.color)
+                                removeCountry: props.removeCountry
                             }
                             return <CountryTag key={idx} {...tagProps} />
                         })}
