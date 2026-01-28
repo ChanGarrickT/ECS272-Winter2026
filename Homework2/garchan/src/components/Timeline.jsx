@@ -58,16 +58,16 @@ export default function Timeline(props){
                     <Paper id='medalTally-widgets' sx={{height: '100%', marginLeft: '3px'}}>
                         <Stack>
                             <Box sx={{margin: '5px 7px'}}>
-                                <input type='checkbox' id='gold-check' name='gold-check' defaultChecked/>
-                                <label htmlFor="gold-check" style={{fontSize: '0.75rem'}}> 🥇 Gold</label><br />
+                                <input type='checkbox' id='gold-check' name='gold-check' style={{cursor: 'pointer'}} defaultChecked/>
+                                <label htmlFor="gold-check" style={{fontSize: '0.75rem', cursor: 'pointer'}}> 🥇 Gold</label><br />
                             </Box>
                             <Box sx={{margin: '5px 7px'}}>
-                                <input type='checkbox' id='silver-check' name='silver-check' defaultChecked/>
-                                <label htmlFor="silver-check" style={{fontSize: '0.75rem'}}> 🥈 Silver</label><br />
+                                <input type='checkbox' id='silver-check' name='silver-check' style={{cursor: 'pointer'}} defaultChecked/>
+                                <label htmlFor="silver-check" style={{fontSize: '0.75rem', cursor: 'pointer'}}> 🥈 Silver</label><br />
                             </Box>
                             <Box sx={{margin: '5px 7px'}}>
-                                <input type='checkbox' id='bronze-check' name='bronze-check' defaultChecked/>
-                                <label htmlFor="bronze-check" style={{fontSize: '0.75rem'}}> 🥉 Bronze</label><br />
+                                <input type='checkbox' id='bronze-check' name='bronze-check' style={{cursor: 'pointer'}} defaultChecked/>
+                                <label htmlFor="bronze-check" style={{fontSize: '0.75rem', cursor: 'pointer'}}> 🥉 Bronze</label><br />
                             </Box>
                             <br />
                             <Button id='select-all-dates' variant='outlined' sx={{fontSize: '0.65rem', margin: '5px 5px'}}>All 📅</Button>
@@ -89,9 +89,9 @@ function drawChart(svgElement, timelineElement, size, props){
     const tooltip = d3.select(timelineElement).append('div')
         .attr('class', 'tooltip')
         .style('left', `${timelineElement.getBoundingClientRect().x + timelineElement.getBoundingClientRect().width/2}px`)
-        .style('top', `${timelineElement.getBoundingClientRect().y - 210}px`)
-        .style('opacity', 0)
-        .style('z-index', 1);
+        .style('bottom', `${timelineElement.getBoundingClientRect().height * 1.6}px`)
+        .style('opacity', '0')
+        .style('z-index', '1');
 
     // Define scales
     const xScale = d3.scaleTime()
@@ -126,6 +126,7 @@ function drawChart(svgElement, timelineElement, size, props){
         .attr('width', highlightWidth)
         .attr('height', size.height - margin.top - margin.bottom)
         .attr('class', d => props.selectedDates.includes(d) ? 'date-selected' : 'date-unselected')
+        .style('cursor', 'pointer')
         .on('click', function (event, d) {
             props.setSelectedDates(prev => {
                 if (prev.includes(d)) {
@@ -159,7 +160,7 @@ function drawChart(svgElement, timelineElement, size, props){
         .style('font-size', '0.8rem');
     
     // Draw lines and their labels
-    const paths = [];
+    // const paths = [];
     props.selectedCountries.forEach(c => {
         svg.append('path')
             .datum(props.medalTally)
@@ -213,7 +214,7 @@ function showToolTip(tooltip, box, props, d){
     tooltip.transition()
         .duration(150)
         .style('left', `${box.getBoundingClientRect().x}px`)
-        .style('top', `${box.getBoundingClientRect().y - 210}px`)
+        .style('bottom', `${box.getBoundingClientRect().height * 1.6}px`)
         .style('opacity', 1)      
 }
 

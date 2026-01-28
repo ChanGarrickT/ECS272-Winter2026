@@ -75,7 +75,7 @@ export default function World(props){
         <Paper elevation={3} sx={{height: '100%', boxSizing: 'border-box', padding: '10px'}}>
             <Stack id='world-panel' spacing={1} sx={{height: '100%'}}>
                 <Paper sx={{marginTop: '10px'}}>
-                    <Stack id='world-widgets' direction={'row'} spacing={3} alignItems={'center'} sx={{ margin: '5px'}}>
+                    <Stack id='world-widgets' direction={'row'} spacing={1} alignItems={'center'} sx={{ margin: '5px'}}>
                         <CountryList />
                         <Button variant='outlined' onClick={() => props.addCountry(fetchListValue())}>Add</Button>
                         {props.selectedCountries.map((entry, idx) => {

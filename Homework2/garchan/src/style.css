@@ -35,11 +35,13 @@ body {
 }
 
 .bubbles {
-  stroke: none;
+  stroke: #555;
+  stroke-opacity: 0;
+  transition: stroke-opacity 100ms;
 }
 
 .bubbles:hover {
-  stroke: black;
+  stroke-opacity: 1;
 }
 
 .date-selected {
@@ -58,10 +60,21 @@ body {
   fill: rgba(240, 240, 225, 0.5);
 }
 
+.country-tag {
+  transition: background-color 150ms;
+  padding: 0 5px;
+  border-radius: 5px;
+}
+
+.country-tag:hover {
+  background-color: #f8f8f8;
+}
+
 .x-button{
   color: lightgray;
   font-size: 1.2rem;
   padding: 0 5px;
+  cursor: pointer;
 }
 
 .x-button:hover {
@@ -75,7 +88,7 @@ body {
   padding: 10px;
   border-radius: 10px;
   font-size: 1rem;
-  filter: drop-shadow(0 0 0.5rem black)
+  filter: drop-shadow(0 0 0.5rem #555)
 }
 
 .tooltip * {
