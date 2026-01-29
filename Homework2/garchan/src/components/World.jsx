@@ -3,14 +3,14 @@ import { useState, useEffect, useRef } from 'react';
 import * as d3 from "d3";
 import { filter, isEmpty } from 'lodash';
 import { useResizeObserver, useDebounceCallback } from 'usehooks-ts';
-import WorldMap from '../../data/countries-110m.json'
+import WorldMap from '../../data/countries-50m.json'
 import countryCodes from '../../data/countryCodes.json';
 import { feature, mesh } from "topojson-client";
 import CountryList from './CountryList.jsx'
 import CountryTag from './CountryTag.jsx';
 
 const COUNTRY_BOUNDARY_WIDTH = 1;
-const MAX_ZOOM = 10;
+const MAX_ZOOM = 50;
 const margin = {left: 50, bottom: 50};
 
 export default function World(props){

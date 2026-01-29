@@ -59,7 +59,7 @@ export default function Bubble(props){
         <Paper elevation={3} sx={{height: '100%', boxSizing: 'border-box', padding: '10px', minHeight: 0}}>
             <Stack id='bubble-panel' spacing={1} sx={{height: '100%'}}>
                 <Paper sx={{marginTop: '10px'}}>
-                    <Stack id='bubble-widgets' direction={'row'} sx={{ margin: '5px'}}>
+                    <Stack id='bubble-widgets' direction={'row'} alignItems={'center'} sx={{ margin: '5px'}}>
                         <input type='checkbox' id='bubble-highlight-check' name='bubble-highlight-check' style={{cursor: 'pointer'}} defaultChecked/>
                         <label htmlFor="bubble-highlight-check" style={{fontSize: '1rem', cursor: 'pointer', margin: '7.25px 5px'}}> Highlight Events by Selected Dates</label>
                     </Stack>
