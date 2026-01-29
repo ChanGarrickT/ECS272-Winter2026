@@ -34,7 +34,7 @@ export default function World(props){
         if (size.width === 0 || size.height === 0) return;
         d3.select('#world-svg').selectAll('*').remove();       
         drawChart(worldRef.current, colorScale, size);
-        recolorChart(filteredMedalCounts, colorScale);
+        recolorChart(filteredMedalCounts, colorScale, props.selectedCountries);
     }, [size]);
 
     // Recolor when data is updated
@@ -49,7 +49,7 @@ export default function World(props){
             tempObj[entry.country]++;
         }
         setFilteredMedalCounts(tempObj);
-        recolorChart(tempObj, colorScale);
+        recolorChart(tempObj, colorScale, props.selectedCountries);
     }, [filteredMedals]);
 
     // Compile the data from which to render
@@ -178,10 +178,11 @@ function drawChart(svgElement, colorScale, size){
     return svg.node()
 }
 
-function recolorChart(filteredMedalCounts, colorScale){
+function recolorChart(filteredMedalCounts, colorScale, selectedCountries){
     d3.select('#draw-group')
         .selectAll('path')
         .data(feature(WorldMap, WorldMap.objects.countries).features)
+        // Highlight selected countries
         .attr('fill', function(d){
             if(d.properties.name in filteredMedalCounts){
                 return colorScale(filteredMedalCounts[d.properties.name]);
@@ -189,6 +190,17 @@ function recolorChart(filteredMedalCounts, colorScale){
                 return '#eee';
             }
         })
+        // Color code countries with stroke color (I can't get the draw order to work)
+        // .attr('stroke', function(d){
+        //     if(d.properties.name in filteredMedalCounts){
+        //         for(let i = 0; i < selectedCountries.length; i++){
+        //             if(d.properties.name === countryCodes[selectedCountries[i].country]){
+        //                 return selectedCountries[i].color;
+        //             }
+        //         }
+        //     }
+        //     return 'white';
+        // })
 }
 
 function fetchListValue(){

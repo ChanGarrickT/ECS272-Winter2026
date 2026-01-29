@@ -24,10 +24,10 @@ body {
   width: 100vw;
 }
 
-#bubble-focus{
+#bubble-focus-name{
   position: absolute;
-  transform: translate(2rem, -5rem);
-  font-size: 3rem;
+  transform: translate(1rem, -3rem);
+  font-size: 1.5rem;
 }
 
 .chart-container{
@@ -35,13 +35,17 @@ body {
 }
 
 .bubbles {
-  stroke: #555;
+  stroke: #aaa;
   stroke-opacity: 0;
   transition: stroke-opacity 100ms;
 }
 
 .bubbles:hover {
   stroke-opacity: 1;
+}
+
+.bubble-focus {
+  fill: #dff;
 }
 
 .date-selected {

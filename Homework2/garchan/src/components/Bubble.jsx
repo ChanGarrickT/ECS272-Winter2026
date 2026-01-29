@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 import { isEmpty } from 'lodash';
 import { useResizeObserver, useDebounceCallback } from 'usehooks-ts';
-import eventToCountryJson from '../../data/eventToCountryHierarchyWithNamesDates.json'
+import eventToCountryJson from '../../data/eventToCountryHierarchyWithNamesDatesMedals.json'
 import countryCodes from '../../data/countryCodes.json'
 
 const margin = { top: 10, right: 170, bottom: 40, left: 50 };
@@ -40,6 +40,9 @@ export default function Bubble(props){
         
         drawChart(bubbleRef.current, athleteInfo, size, props);
         highlightBubble(highlightEvents, props.selectedDates);
+
+        d3.select('#bubble-focus-name').text('');
+        props.setHighlightedDates([]);
     }, [athleteInfo, size]);
 
     // Handle coloring circles independent of zoom
@@ -47,18 +50,24 @@ export default function Bubble(props){
         highlightBubble(highlightEvents, props.selectedDates);
     }, [props.selectedDates, highlightEvents])
 
+    useEffect(() => {
+        d3.select('#bubble-highlight-check')
+            .on('change', event => setHighlightEvents(event.target.checked))
+    }, [])
+
     return (
         <Paper elevation={3} sx={{height: '100%', boxSizing: 'border-box', padding: '10px', minHeight: 0}}>
             <Stack id='bubble-panel' spacing={1} sx={{height: '100%'}}>
                 <Paper sx={{marginTop: '10px'}}>
                     <Stack id='bubble-widgets' direction={'row'} sx={{ margin: '5px'}}>
-                        <Button variant='outlined' onClick={() => setHighlightEvents((prev) => !prev)}>Toggle Highlight Events by Dates</Button>
+                        <input type='checkbox' id='bubble-highlight-check' name='bubble-highlight-check' style={{cursor: 'pointer'}} defaultChecked/>
+                        <label htmlFor="bubble-highlight-check" style={{fontSize: '1rem', cursor: 'pointer', margin: '7.25px 5px'}}> Highlight Events by Selected Dates</label>
                     </Stack>
                 </Paper>
                 <Paper sx={{flex: 1, minHeight: 0}}>
                     <Box id='bubble-content' ref={bubbleContainerRef} sx={{height: '100%', flex: 1, minHeight: 0}}>
                         <svg id='bubble-svg' ref={bubbleRef} style={{ width: '100%', height: '100%', minHeight: 0 }}></svg>
-                        <span id='bubble-focus'></span>
+                        <span id='bubble-focus-name'></span>
                     </Box>
                 </Paper>
             </Stack>
@@ -91,13 +100,16 @@ function drawChart(svgElement, bubbleInfo, size, props){
         .selectAll('circle')
         .data(root.descendants().slice(1)) // slice(1) to not draw root
         .join('circle')
+        .each(function(d){
+            d.element = this;
+        })
         .attr('fill', d => colorScale(d.depth))
         .attr('pointer-events', d => !d.children ? 'none' : null) // clicking on leaf triggers parent
         .attr('class', d => d.depth === 2 ? `bubbles bubble-d2 bubble-${d.data.dates[0]}` : 'bubbles')
         .on('click', function(event, d) {
              if(focus !== d){ 
                 zoom(event, d);
-                d3.select('#bubble-focus').text(d.data.name);
+                d3.select('#bubble-focus-name').text(d.depth === 1 ? d.data.name : `${d.parent.data.name} - ${d.data.name}`);
                 if(d.children){props.setHighlightedDates(d.data.dates);}         
                 event.stopPropagation();
             }
@@ -114,12 +126,39 @@ function drawChart(svgElement, bubbleInfo, size, props){
         .join('text')
             .style('fill-opacity', d => d.parent === root ? 1 : 0)
             .style('display', d => d.parent === root ? "inline" : "none")
-            .text(d => d.children ? d.data.name : countryCodes[d.data.name])
+            // .text(d => d.children ? d.data.name : `${countryCodes[d.data.name]}`)
+    
+    label.each(function(d){
+        const text = d3.select(this);
+        if(d.children){
+            text.append('tspan')
+                .attr('x', 0)
+                .attr('dy', '5px')
+                .text(d.data.name)
+        } else {
+            if(d.data.medals !== ''){
+                text.append('tspan')
+                    .attr('x', 0)
+                    .attr('dy', '-12px')
+                    .text(countryCodes[d.data.name])
+                text.append('tspan')
+                    .attr('x', 0)
+                    .attr('dy', '33px')
+                    .attr('font-size', '2rem')
+                    .text(d.data.medals)
+            } else {
+                text.append('tspan')
+                    .attr('x', 0)
+                    .attr('dy', '5px')
+                    .text(countryCodes[d.data.name])
+            }
+        }
+    })
     
     // Zoom to root by default or by clicking background
     svg.on('click', function(e){
         zoom(e, root);
-        d3.select('#bubble-focus').text('');
+        d3.select('#bubble-focus-name').text('');
         props.setHighlightedDates([]);
     });
     let focus = root;
@@ -138,7 +177,9 @@ function drawChart(svgElement, bubbleInfo, size, props){
     }
 
     function zoom(event, d){
+        d3.select(focus.element).classed('bubble-focus', false)
         focus = d;
+        d3.select(d.element).classed('bubble-focus', true)
 
         const transition = svg.transition()
             .duration(event.altKey ? 7500 : 750)
