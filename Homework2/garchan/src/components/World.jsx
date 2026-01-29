@@ -16,6 +16,7 @@ const margin = {left: 50, bottom: 50};
 export default function World(props){
     const [filteredMedals, setFilteredMedals] = useState([]);           // details with no counts
     const [filteredMedalCounts, setFilteredMedalCounts] = useState({}); // {country: count}
+    const worldContainerRef = useRef(null);
     const worldRef = useRef(null);
 
     const [size, setSize] = useState({ width: 0, height: 0 });
@@ -33,7 +34,7 @@ export default function World(props){
         if (isEmpty(WorldMap)) return;
         if (size.width === 0 || size.height === 0) return;
         d3.select('#world-svg').selectAll('*').remove();       
-        drawChart(worldRef.current, colorScale, size);
+        drawChart(worldRef.current, worldContainerRef.current, colorScale, size);
         recolorChart(filteredMedalCounts, colorScale, props.selectedCountries);
     }, [size]);
 
@@ -90,7 +91,7 @@ export default function World(props){
                     </Stack>
                 </Paper>
                 <Paper sx={{flex: 1}}>
-                    <Box id='world-content' sx={{width: '100%', height: '100%'}}>
+                    <Box id='world-content' ref={worldContainerRef} sx={{width: '100%', height: '100%'}}>
                         <svg id='world-svg' ref={worldRef} width='100%' height='100%'></svg>
                     </Box>
                 </Paper>
@@ -99,12 +100,17 @@ export default function World(props){
     )
 }
 
-function drawChart(svgElement, colorScale, size){
+function drawChart(svgElement, containerElement, colorScale, size){
     const svg = d3.select(svgElement);
     svg.selectAll("*").remove();    // clear previous render
     const centerX = size.width / 2;
     const centerY = size.height / 2;
 
+    // Create tooltip element
+    const tooltip = d3.select(containerElement).append('div')
+        .attr('class', 'tooltip');
+
+    // Set up projection
     const proj = d3.geoNaturalEarth1()
         .scale(0.3 * Math.min(size.width, size.height))
         .center([0, 0])
@@ -115,6 +121,7 @@ function drawChart(svgElement, colorScale, size){
     const g = svg.append('g')
         .attr('id', 'draw-group');
 
+    // Draw countries
     const countries = g.append('g')
         .selectAll('path')
         .data(feature(WorldMap, WorldMap.objects.countries).features)
@@ -124,6 +131,9 @@ function drawChart(svgElement, colorScale, size){
         .attr('stroke', 'white')
         .attr('stroke-width', COUNTRY_BOUNDARY_WIDTH)
         .attr('d', mapPath)
+        .on('mouseover', (event, d) => showToolTip(event, d, tooltip))
+        .on('mousemove', (event, d) => moveToolTip(event, tooltip))
+        .on('mouseout', (event, d) => hideToolTip(event, tooltip));
 
     // Draw legend
     const legendScale = d3.scaleLinear()
@@ -204,5 +214,30 @@ function recolorChart(filteredMedalCounts, colorScale, selectedCountries){
 }
 
 function fetchListValue(){
-    return d3.select('#country-select').property('value')
+    return d3.select('#country-select').property('value');
+}
+
+function showToolTip(event, d, tooltip){
+    tooltip.selectAll('*').remove();
+    tooltip.append('p')
+        .text(d.properties.name)
+        .style('font-size', '0.8rem');
+    tooltip
+        .style('left', `${event.pageX - tooltip.node().getBoundingClientRect().width / 2}px`)
+        .style('top', `${event.pageY + 20}px`);
+    tooltip.transition()
+        .duration(150)
+        .style('opacity', 1);
+}
+
+function moveToolTip(event, tooltip){
+    tooltip
+        .style('left', `${event.pageX - tooltip.node().getBoundingClientRect().width / 2}px`)
+        .style('top', `${event.pageY + 20}px`);
+}
+
+function hideToolTip(event, tooltip){
+    tooltip.transition()
+        .duration(150)
+        .style('opacity', 0);
 }

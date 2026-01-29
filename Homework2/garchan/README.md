@@ -20,3 +20,8 @@ The timeline shows the medal tally of the selected countries over the two weeks.
    npm run dev
    ```
 4. In a web browser, navigate to `localhost:3000`
+
+## Notes
+
+- Athletes participating in multiple events are counted each time in the circle packing chart.
+- Tooltip drop shadows leave artifacts in Safari.

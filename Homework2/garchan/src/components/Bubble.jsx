@@ -38,7 +38,7 @@ export default function Bubble(props){
         if (size.width === 0 || size.height === 0) return;
         d3.select('#bubble-svg').selectAll('*').remove();
         
-        drawChart(bubbleRef.current, athleteInfo, size, props);
+        drawChart(bubbleRef.current, bubbleContainerRef.current, athleteInfo, size, props);
         highlightBubble(highlightEvents, props.selectedDates);
 
         d3.select('#bubble-focus-name').text('');
@@ -65,6 +65,7 @@ export default function Bubble(props){
                     </Stack>
                 </Paper>
                 <Paper sx={{flex: 1, minHeight: 0}}>
+                    <Box id='athlete-list' className='tooltip'></Box>
                     <Box id='bubble-content' ref={bubbleContainerRef} sx={{height: '100%', flex: 1, minHeight: 0}}>
                         <svg id='bubble-svg' ref={bubbleRef} style={{ width: '100%', height: '100%', minHeight: 0 }}></svg>
                         <span id='bubble-focus-name'></span>
@@ -75,8 +76,13 @@ export default function Bubble(props){
     )
 }
 
-function drawChart(svgElement, bubbleInfo, size, props){
+function drawChart(svgElement, containerElement, bubbleInfo, size, props){
     const minDim = Math.min(size.width, size.height);
+
+    // Create tooltip element
+    d3.select(containerElement).selectAll('.tooltip').remove();
+    const tooltip = d3.select(containerElement).append('div')
+        .attr('class', 'tooltip')
 
     const svg = d3.select(svgElement)
         .attr('viewBox', `0 0 ${size.width} ${size.height}`)
@@ -93,6 +99,7 @@ function drawChart(svgElement, bubbleInfo, size, props){
         .sum(d => d.value)
         .sort((a, b) => b.value - a.value));
     const root = pack(bubbleInfo);
+    let focus = root;
 
     // Draw circles
     const node = svg.append('g')
@@ -104,15 +111,38 @@ function drawChart(svgElement, bubbleInfo, size, props){
             d.element = this;
         })
         .attr('fill', d => colorScale(d.depth))
-        .attr('pointer-events', d => !d.children ? 'none' : null) // clicking on leaf triggers parent
         .attr('class', d => d.depth === 2 ? `bubbles bubble-d2 bubble-${d.data.dates[0]}` : 'bubbles')
         .on('click', function(event, d) {
-             if(focus !== d){ 
+            // Zoom and display circle name in the corner
+            if(d.depth === 3){          // If node is a leaf
+                if(focus !== d.parent){
+                    zoom(event, d.parent);
+                    d3.select('#bubble-focus-name').text(d.parent.depth === 1 ? d.parent.data.name : `${d.parent.parent.data.name} - ${d.parent.data.name}`);
+                    props.setHighlightedDates(d.parent.data.dates);        
+                    event.stopPropagation();
+                }
+            } else if(focus !== d){     // all other nodes
                 zoom(event, d);
                 d3.select('#bubble-focus-name').text(d.depth === 1 ? d.data.name : `${d.parent.data.name} - ${d.data.name}`);
                 if(d.children){props.setHighlightedDates(d.data.dates);}         
                 event.stopPropagation();
             }
+        })
+        .on('mouseover', function(event, d){
+            event.stopPropagation();
+            if(focus.depth === 2 && d.depth === 3 && d.parent === focus){
+                showToolTip(event, d, tooltip)               
+            }
+        })
+        .on('mousemove', function(event, d){
+            event.stopPropagation();
+            if(d.depth === 3){
+                moveToolTip(event, tooltip);
+            }
+        })
+        .on('mouseout', function(event, d){
+            event.stopPropagation();
+            hideToolTip(d, tooltip);
         });
 
     // Draw labels
@@ -126,7 +156,6 @@ function drawChart(svgElement, bubbleInfo, size, props){
         .join('text')
             .style('fill-opacity', d => d.parent === root ? 1 : 0)
             .style('display', d => d.parent === root ? "inline" : "none")
-            // .text(d => d.children ? d.data.name : `${countryCodes[d.data.name]}`)
     
     label.each(function(d){
         const text = d3.select(this);
@@ -161,7 +190,6 @@ function drawChart(svgElement, bubbleInfo, size, props){
         d3.select('#bubble-focus-name').text('');
         props.setHighlightedDates([]);
     });
-    let focus = root;
     let view;
     zoomTo([focus.x, focus.y, focus.r * 2]);
 
@@ -184,8 +212,8 @@ function drawChart(svgElement, bubbleInfo, size, props){
         const transition = svg.transition()
             .duration(event.altKey ? 7500 : 750)
             .tween("zoom", d => {
-            const i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2]);
-            return t => zoomTo(i(t));
+                const i = d3.interpolateZoom(view, [focus.x, focus.y, focus.r * 2]);
+                return t => zoomTo(i(t));
             });
 
         label
@@ -209,4 +237,33 @@ function highlightBubble(highlight, selectedDates){
                 .attr('fill', '#FFF096')  
         }      
     }
+}
+
+// Clear tooltip and then populate with athlete names
+function showToolTip(event, d, tooltip){
+    tooltip.selectAll('*').remove();
+    for(let i = 0; i < d.data.athletes.length; i++){
+        tooltip.append('p')
+            .text(d.data.athletes[i])
+            .style('font-size', '0.8rem')
+    }
+    tooltip
+        .style('left', `${event.pageX + 30}px`)
+        .style('top', `${event.pageY - tooltip.node().getBoundingClientRect().height / 2}px`)
+    tooltip.transition()
+        .duration(150)
+        .style('opacity', 1)
+}
+
+function moveToolTip(event, tooltip){
+    tooltip
+        .style('left', `${event.pageX + 30}px`)
+        .style('top', `${event.pageY - tooltip.node().getBoundingClientRect().height / 2}px`)
+}
+
+function hideToolTip(d, tooltip){
+    if(d.depth !== 3) return;
+    tooltip.transition()
+        .duration(150)
+        .style('opacity', 0)
 }

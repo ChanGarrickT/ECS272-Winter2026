@@ -1,6 +1,7 @@
 :root {
   font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
   font-size: 1rem;
+  overflow: hidden;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -92,7 +93,10 @@ body {
   padding: 10px;
   border-radius: 10px;
   font-size: 1rem;
-  filter: drop-shadow(0 0 0.5rem #555)
+  filter: drop-shadow(0 0 0.5rem #555);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .tooltip * {

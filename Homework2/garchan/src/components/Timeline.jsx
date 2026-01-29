@@ -89,9 +89,7 @@ function drawChart(svgElement, timelineElement, size, props){
     const tooltip = d3.select(timelineElement).append('div')
         .attr('class', 'tooltip')
         .style('left', `${timelineElement.getBoundingClientRect().x + timelineElement.getBoundingClientRect().width/2}px`)
-        .style('bottom', `${timelineElement.getBoundingClientRect().height * 1.6}px`)
-        .style('opacity', '0')
-        .style('z-index', '1');
+        .style('bottom', `${timelineElement.getBoundingClientRect().height * 1.6}px`);
 
     // Define scales
     const xScale = d3.scaleTime()
