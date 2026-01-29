@@ -1,0 +1,104 @@
+:root {
+  font-family: Inter, Avenir, Helvetica, Arial, sans-serif;
+  font-size: 1rem;
+  overflow: hidden;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+#title {
+  font-size: large;
+  text-align: center;
+  margin: 0;
+}
+
+#main-container{
+  height: 100vh;
+  width: 100vw;
+}
+
+#bubble-focus-name{
+  position: absolute;
+  transform: translate(1rem, -3rem);
+  font-size: 1.5rem;
+}
+
+.chart-container{
+  height: 100%;
+}
+
+.bubbles {
+  stroke: #aaa;
+  stroke-opacity: 0;
+  transition: stroke-opacity 100ms;
+}
+
+.bubbles:hover {
+  stroke-opacity: 1;
+}
+
+.bubble-focus {
+  fill: #dff;
+}
+
+.date-selected {
+  fill: rgba(255, 240, 150, 0.5);
+}
+
+.date-selected:hover {
+  fill: rgba(255, 250, 200, 0.5);
+}
+
+.date-unselected {
+  fill: rgba(255, 255, 255, 0);
+}
+
+.date-unselected:hover {
+  fill: rgba(240, 240, 225, 0.5);
+}
+
+.country-tag {
+  transition: background-color 150ms;
+  padding: 0 5px;
+  border-radius: 5px;
+}
+
+.country-tag:hover {
+  background-color: #f8f8f8;
+}
+
+.x-button{
+  color: lightgray;
+  font-size: 1.2rem;
+  padding: 0 5px;
+  cursor: pointer;
+}
+
+.x-button:hover {
+  color: red;
+}
+
+.tooltip {
+  position: absolute;
+  background-color: rgba(255, 255, 255, 1);
+  color: black;
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 1rem;
+  filter: drop-shadow(0 0 0.5rem #555);
+  opacity: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.tooltip * {
+  margin: 3px 0;
+}
