@@ -165,6 +165,7 @@ function drawChart(svgElement, containerElement, bubbleInfo, size, props){
                 .attr('dy', '5px')
                 .text(d.data.name)
         } else {
+            // Medal enojis, if any, on separate line
             if(d.data.medals !== ''){
                 text.append('tspan')
                     .attr('x', 0)
@@ -230,10 +231,14 @@ function drawChart(svgElement, containerElement, bubbleInfo, size, props){
 // Highlight events in which the medal ceremony was on a day selected by the user
 function highlightBubble(highlight, selectedDates){
     d3.selectAll('.bubble-d2')
+        .transition()
+        .duration(150)
         .attr('fill', colorScale(2))
     if(highlight){
         for(let i = 0; i < selectedDates.length; i++){
             d3.selectAll(`.bubble-${selectedDates[i]}`)
+                .transition()
+                .duration(150)
                 .attr('fill', '#FFF096')  
         }      
     }

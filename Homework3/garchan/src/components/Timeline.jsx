@@ -18,6 +18,10 @@ export default function Timeline(props){
     const medalTallyRef = useRef(null);
     const timelineContainerRef = useRef(null);
 
+    // Track previous state for animation
+    const prevSelectedMedals = useRef(null);
+    const prevYMax = useRef(null);
+
     const [size, setSize] = useState({ width: 0, height: 0 });   
     const onResize = useDebounceCallback((size) => setSize(size), 200);
 
@@ -28,9 +32,21 @@ export default function Timeline(props){
         if (isEmpty(props.medalTally)) return;
         if (size.width === 0 || size.height === 0) return;
         d3.select('#medalTally-svg').selectAll('*').remove();
+        const maxMedalCount = getMedalExtent(props.medalTally, props.selectedCountries, props.selectedMedals)
+        drawChart(medalTallyRef.current, timelineContainerRef.current, maxMedalCount, null, null, size, props);
+        prevSelectedMedals.current = props.selectedMedals;
+        prevYMax.current = maxMedalCount;
+    }, [props.medalTally, props.selectedCountries, props.highlightedDates, props.selectedDates, size]);
 
-        drawChart(medalTallyRef.current, timelineContainerRef.current, size, props);
-    }, [props.medalTally, props.selectedCountries, props.highlightedDates, props.selectedDates, props.selectedMedals, size]);
+    // Animate lines when medal filter changes
+    useEffect(() => {
+        if (isEmpty(props.medalTally)) return;
+        d3.select('#medalTally-svg').selectAll('*').remove();
+        const maxMedalCount = getMedalExtent(props.medalTally, props.selectedCountries, props.selectedMedals)
+        drawChart(medalTallyRef.current, timelineContainerRef.current, maxMedalCount, prevSelectedMedals.current, prevYMax.current, size, props);
+        prevSelectedMedals.current = props.selectedMedals;
+        prevYMax.current = maxMedalCount;
+    }, [props.selectedMedals]);
 
     // Add listeners to widgets
     useEffect(() => {
@@ -80,7 +96,7 @@ export default function Timeline(props){
     )
 }
 
-function drawChart(svgElement, timelineElement, size, props){
+function drawChart(svgElement, timelineElement, maxMedalCount, prevSelectedMedals, prevYMax, size, props){
     const svg = d3.select(svgElement);
     svg.selectAll('*').remove();    // clear previous render
 
@@ -96,8 +112,9 @@ function drawChart(svgElement, timelineElement, size, props){
         .domain([d3.timeParse("%Y-%m-%d")([props.medalTally[0].date]), d3.timeParse("%Y-%m-%d")([props.medalTally.at(-1).date])])
         .range([margin.left, size.width - margin.right]);   
     const yScale = d3.scaleLinear()
-        .domain([0, getMedalExtent(props.medalTally, props.selectedCountries, props.selectedMedals)])
+        .domain([0, maxMedalCount])
         .range([size.height - margin.bottom, margin.top]);
+    const prevYScale = prevYMax ? d3.scaleLinear().domain([0, prevYMax]).range([size.height - margin.bottom, margin.top]) : null;
 
     // Highlight dates based on bubble chart
     const x1 = d3.timeParse("%Y-%m-%d")('2024-07-27');
@@ -159,31 +176,44 @@ function drawChart(svgElement, timelineElement, size, props){
     
     // Draw lines and their labels
     // const paths = [];
-    props.selectedCountries.forEach(c => {
-        svg.append('path')
-            .datum(props.medalTally)
-            .attr('fill', 'none')
-            .attr('stroke', c.color)
-            .attr('stroke-width', 1)
-            .attr('d', d3.line()
-                .x(m => xScale(d3.timeParse("%Y-%m-%d")(m.date)))
-                .y(m => yScale(props.selectedMedals.gold * m[c.country].gold +
-                               props.selectedMedals.silver * m[c.country].silver +
-                               props.selectedMedals.bronze * m[c.country].bronze))
-            )
+    if(!prevSelectedMedals){
+        props.selectedCountries.forEach(c => {
+            svg.append('path')
+                .datum(props.medalTally)
+                .attr('fill', 'none')
+                .attr('stroke', c.color)
+                .attr('stroke-width', 1)
+                .attr('d', d3.line()
+                    .x(m => xScale(d3.timeParse("%Y-%m-%d")(m.date)))
+                    .y(m => yScale(props.selectedMedals.gold * m[c.country].gold +
+                                   props.selectedMedals.silver * m[c.country].silver +
+                                   props.selectedMedals.bronze * m[c.country].bronze))
+                )
+        });
+    } else {
+        props.selectedCountries.forEach(c => {
+            svg.append('path')
+                .datum(props.medalTally)
+                .attr('fill', 'none')
+                .attr('stroke', c.color)
+                .attr('stroke-width', 1)
+                .attr('d', d3.line()
+                    .x(m => xScale(d3.timeParse("%Y-%m-%d")(m.date)))
+                    .y(m => prevYScale(prevSelectedMedals.gold * m[c.country].gold +
+                                       prevSelectedMedals.silver * m[c.country].silver +
+                                       prevSelectedMedals.bronze * m[c.country].bronze))
+                )
+                .transition()
+                .duration(150)
+                .attr('d', d3.line()
+                    .x(m => xScale(d3.timeParse("%Y-%m-%d")(m.date)))
+                    .y(m => yScale(props.selectedMedals.gold * m[c.country].gold +
+                                   props.selectedMedals.silver * m[c.country].silver +
+                                   props.selectedMedals.bronze * m[c.country].bronze))
+                )
 
-        // svg.append('g')
-        //     .append('text')
-        //     .attr('transform', `translate(${size.width - margin.right + 5}, ${3 + yScale(props.selectedMedals.gold * props.medalTally.at(-1)[c.country].gold +
-        //                                                                                  props.selectedMedals.silver * props.medalTally.at(-1)[c.country].silver +
-        //                                                                                  props.selectedMedals.bronze * props.medalTally.at(-1)[c.country].bronze)})`)
-        //     .text(countryCodes[c.country] + ' - ' + (props.selectedMedals.gold * props.medalTally.at(-1)[c.country].gold + 
-        //                                              props.selectedMedals.silver * props.medalTally.at(-1)[c.country].silver + 
-        //                                              props.selectedMedals.bronze * props.medalTally.at(-1)[c.country].bronze))
-        //     .style('fill', c.color)
-        //     .style('font-size', '0.7rem')
-        }
-    );
+        });
+    }
 }
 
 function getMedalExtent(medalTally, countries, medals){
