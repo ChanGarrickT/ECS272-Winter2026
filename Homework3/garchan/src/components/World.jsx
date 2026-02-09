@@ -18,6 +18,7 @@ export default function World(props){
     const [filteredMedalCounts, setFilteredMedalCounts] = useState({}); // {country: count}
     const worldContainerRef = useRef(null);
     const worldRef = useRef(null);
+    const tooltipRef = useRef(null);
 
     const [size, setSize] = useState({ width: 0, height: 0 });
 
@@ -107,7 +108,9 @@ function drawChart(svgElement, containerElement, colorScale, size){
     const centerY = size.height / 2;
 
     // Create tooltip element
+    d3.select(containerElement).select('#world-tooltip').remove();
     const tooltip = d3.select(containerElement).append('div')
+        .attr('id', 'world-tooltip')
         .attr('class', 'tooltip');
 
     // Set up projection
@@ -131,7 +134,7 @@ function drawChart(svgElement, containerElement, colorScale, size){
         .attr('stroke', 'white')
         .attr('stroke-width', COUNTRY_BOUNDARY_WIDTH)
         .attr('d', mapPath)
-        .on('mouseover', (event, d) => showToolTip(event, d, tooltip))
+        
         .on('mousemove', (event, d) => moveToolTip(event, tooltip))
         .on('mouseout', (event, d) => hideToolTip(event, tooltip));
 
@@ -200,6 +203,7 @@ function recolorChart(filteredMedalCounts, colorScale, selectedCountries){
                 return '#eee';
             }
         })
+        .on('mouseover', (event, d) => showToolTip(event, d, filteredMedalCounts))
         // Color code countries with stroke color (I can't get the draw order to work)
         // .attr('stroke', function(d){
         //     if(d.properties.name in filteredMedalCounts){
@@ -217,10 +221,15 @@ function fetchListValue(){
     return d3.select('#country-select').property('value');
 }
 
-function showToolTip(event, d, tooltip){
+function showToolTip(event, d, filteredMedalCounts){
+    const tooltip = d3.select('#world-tooltip');
     tooltip.selectAll('*').remove();
+    let text = d.properties.name;
+    if(d.properties.name in filteredMedalCounts){
+        text += `: ${filteredMedalCounts[d.properties.name]}`
+    }
     tooltip.append('p')
-        .text(d.properties.name)
+        .text(text)
         .style('font-size', '0.8rem');
     tooltip
         .style('left', `${event.pageX - tooltip.node().getBoundingClientRect().width / 2}px`)
